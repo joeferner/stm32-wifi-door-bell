@@ -1,0 +1,4 @@
+build/
+.kdev4/
+version.h
+firmware.kdev4
