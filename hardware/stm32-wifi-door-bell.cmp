@@ -1,0 +1,143 @@
+Cmp-Mod V01 Created by Cvpcb (2014-11-09 BZR 5259)-product   date = Wed 10 Dec 2014 12:14:01 PM EST
+
+BeginCmp
+TimeStamp = /54888245;
+Reference = C1;
+ValeurCmp = 47pF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /548881C8;
+Reference = C2;
+ValeurCmp = 47pF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /5488793D;
+Reference = C3;
+ValeurCmp = 18pF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /5488791D;
+Reference = C4;
+ValeurCmp = 18pF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /548878EE;
+Reference = C5;
+ValeurCmp = 18pF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /548878C1;
+Reference = C6;
+ValeurCmp = 18pF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /548884DC;
+Reference = C7;
+ValeurCmp = 0.1uF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /54888544;
+Reference = C8;
+ValeurCmp = 0.1uF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /54888583;
+Reference = C9;
+ValeurCmp = 0.1uF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /548885AD;
+Reference = C10;
+ValeurCmp = 0.1uF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /54888B9A;
+Reference = C11;
+ValeurCmp = 0.1uF;
+IdModule  = kicadlib:CAPC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /54887F2F;
+Reference = J1;
+ValeurCmp = USB;
+IdModule  = kicadlib:JST_UB-MC5BR3-SD204-4S-NMP;
+EndCmp
+
+BeginCmp
+TimeStamp = /5488788C;
+Reference = P1;
+ValeurCmp = SWD;
+IdModule  = kicadlib:HDRV6W66P254_1X6_1524X249X838P;
+EndCmp
+
+BeginCmp
+TimeStamp = /54887927;
+Reference = P2;
+ValeurCmp = FTDI-PLUG;
+IdModule  = kicadlib:HDRV6W66P254_1X6_1524X249X838P;
+EndCmp
+
+BeginCmp
+TimeStamp = /548889AA;
+Reference = R1;
+ValeurCmp = 1.5K;
+IdModule  = kicadlib:RESC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /5488849C;
+Reference = R2;
+ValeurCmp = 22R;
+IdModule  = kicadlib:RESC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /548884EB;
+Reference = R3;
+ValeurCmp = 22R;
+IdModule  = kicadlib:RESC2012X100N;
+EndCmp
+
+BeginCmp
+TimeStamp = /5488778C;
+Reference = U1;
+ValeurCmp = STM32-48PIN;
+IdModule  = kicadlib:QFP50P900X900X160-48N;
+EndCmp
+
+BeginCmp
+TimeStamp = /5488786B;
+Reference = X1;
+ValeurCmp = 32.768kHz;
+IdModule  = kicadlib:SOJ550P370X240-4N;
+EndCmp
+
+BeginCmp
+TimeStamp = /5488789E;
+Reference = X2;
+ValeurCmp = 8MHz;
+IdModule  = kicadlib:XTAL8045X200N;
+EndCmp
+
+EndListe
