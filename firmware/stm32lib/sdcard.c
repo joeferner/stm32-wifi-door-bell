@@ -157,6 +157,8 @@ BOOL sdcard_read_block(uint32_t block, uint8_t* data) {
   for (n = 0; n < SDCARD_BLOCK_SIZE; n++) {
     data[n] = _sdcard_spi_transfer(0xff);
   }
+
+  _sdcard_cs_deassert();
   return TRUE;
 
 fail:
@@ -165,7 +167,55 @@ fail:
 }
 
 BOOL sdcard_write_block(uint32_t blockNumber, const uint8_t* data) {
-  printf("TODO sdcard_write_block\n");
+  int16_t crc = 0xffff; // Dummy CRC value
+  int i;
+
+  // don't allow write to first block
+  if (blockNumber == 0) {
+    printf("SD_CARD_ERROR_WRITE_BLOCK_ZERO\n");
+    goto fail;
+  }
+
+  // use address if not SDHC card
+  if (_sdcard_type != SD_CARD_TYPE_SDHC) {
+    blockNumber <<= 9;
+  }
+
+  if (_sdcard_command(CMD24, blockNumber)) {
+    printf("SD_CARD_ERROR_CMD24\n");
+    goto fail;
+  }
+
+  _sdcard_spi_transfer(DATA_START_BLOCK);
+  for (i = 0; i < SDCARD_BLOCK_SIZE; i++) {
+    _sdcard_spi_transfer(data[i]);
+  }
+
+  _sdcard_spi_transfer(crc >> 8);
+  _sdcard_spi_transfer(crc);
+
+  if ((_sdcard_spi_transfer(0xff) & DATA_RES_MASK) != DATA_RES_ACCEPTED) {
+    printf("SD_CARD_ERROR_WRITE\n");
+    goto fail;
+  }
+
+  // wait for flash programming to complete
+  if (!_sdcard_wait_not_busy(SD_WRITE_TIMEOUT)) {
+    printf("SD_CARD_ERROR_WRITE_TIMEOUT\n");
+    goto fail;
+  }
+
+  // response is r2 so get and check two bytes for nonzero
+  if (_sdcard_command(CMD13, 0) || _sdcard_spi_transfer(0xff)) {
+    printf("SD_CARD_ERROR_WRITE_PROGRAMMING\n");
+    goto fail;
+  }
+
+  _sdcard_cs_deassert();
+  return TRUE;
+
+fail:
+  _sdcard_cs_deassert();
   return FALSE;
 }
 
