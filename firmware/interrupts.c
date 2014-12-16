@@ -1,8 +1,8 @@
 #include <stm32f10x_exti.h>
 #include <stdio.h>
 #include "platform_config.h"
-#include "debug.h"
-#include "time.h"
+#include "stm32lib/debug.h"
+#include "stm32lib/time.h"
 
 static void HardFault_Handler(void) __attribute__((naked));
 void prvGetRegistersFromStack(uint32_t* pulFaultStackAddress);

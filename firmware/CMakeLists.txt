@@ -50,14 +50,14 @@ SET(PROJECT_SOURCES
   system_stm32f10x.c
 
   main.c
-  spi.c
-  delay.c
-  time.c
-  debug.c
-  newlib.c
-  sdcard.c
-  sdcard-fat.c
   interrupts.c
+  stm32lib/spi.c
+  stm32lib/delay.c
+  stm32lib/time.c
+  stm32lib/debug.c
+  stm32lib/newlib.c
+  stm32lib/sdcard.c
+  stm32lib/sdcard-fat.c
 )
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}.elf ${PROJECT_SOURCES} ${CMSIS_STARTUP_SOURCE})

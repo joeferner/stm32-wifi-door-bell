@@ -6,12 +6,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "platform_config.h"
-#include "debug.h"
-#include "delay.h"
-#include "time.h"
-#include "spi.h"
-#include "sdcard.h"
-#include "sdcard-fat.h"
+#include "stm32lib/debug.h"
+#include "stm32lib/delay.h"
+#include "stm32lib/time.h"
+#include "stm32lib/spi.h"
+#include "stm32lib/sdcard.h"
+#include "stm32lib/sdcard-fat.h"
 
 void setup();
 void loop();
