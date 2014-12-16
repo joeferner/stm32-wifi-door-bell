@@ -9,6 +9,9 @@
 #include "debug.h"
 #include "delay.h"
 #include "time.h"
+#include "spi.h"
+#include "sdcard.h"
+#include "sdcard-fat.h"
 
 void setup();
 void loop();
@@ -25,8 +28,25 @@ void setup() {
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
   GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+  time_setup();
 
   debug_setup();
+  spi_setup();
+  if (!sdcard_setup()) {
+    printf("Failed to setup SDCard\n");
+  } else {
+    if (!sdcard_fat_setup()) {
+      printf("Failed to setup SDCard Fat\n");
+    }
+  }
+
+  SDCARD_FAT_FILE f;
+  if (!sdcard_fat_open(&f, "test.txt", SDCARD_FAT_READ)) {
+    printf("Failed to open test.txt\n");
+  } else {
+    printf("opened test.txt\n");
+    sdcard_fat_close(&f);
+  }
 }
 
 void loop() {

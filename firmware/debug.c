@@ -42,7 +42,12 @@ void debug_setup() {
   GPIO_Init(DEBUG_LED_PORT, &gpioInitStructure);
 #endif
 
-  RCC_APB2PeriphClockCmd(DEBUG_USART_RCC, ENABLE);
+  if (DEBUG_RCC1) {
+    RCC_APB1PeriphClockCmd(DEBUG_RCC1, ENABLE);
+  }
+  if (DEBUG_RCC2) {
+    RCC_APB2PeriphClockCmd(DEBUG_RCC2, ENABLE);
+  }
 
   // Configure USART Tx as alternate function push-pull
   gpioInitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
@@ -91,7 +96,7 @@ void debug_setup() {
 
   // Enable USART
   USART_Cmd(DEBUG_USART, ENABLE);
-  
+
   printf("END Debug\n");
 }
 
