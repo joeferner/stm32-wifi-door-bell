@@ -36,16 +36,11 @@ uint8_t _sdcard_acommand(uint8_t acmd, uint32_t arg);
 uint8_t _sdcard_wait_start_block();
 uint8_t _sdcard_wait_not_busy(uint16_t timeoutMillis);
 
-BOOL sdcard_setup() {
+void sdcard_setup_gpio() {
   GPIO_InitTypeDef gpioInitStructure;
 
-  // 16-bit init start time allows over a minute
-  uint16_t t0 = (uint16_t)time_ms();
-  uint32_t arg;
-  uint8_t status;
+  printf("BEGIN SDCard Setup GPIO\n");
 
-  printf("BEGIN SDCard Setup\n");
-  
   RCC_APB1PeriphClockCmd(SDCARD_RCC1, ENABLE);
   RCC_APB2PeriphClockCmd(SDCARD_RCC2, ENABLE);
 
@@ -55,6 +50,17 @@ BOOL sdcard_setup() {
   GPIO_Init(SDCARD_CS, &gpioInitStructure);
 
   _sdcard_cs_deassert();
+
+  printf("END SDCard Setup GPIO\n");
+}
+
+BOOL sdcard_setup() {
+  // 16-bit init start time allows over a minute
+  uint16_t t0 = (uint16_t)time_ms();
+  uint32_t arg;
+  uint8_t status;
+
+  printf("BEGIN SDCard Setup\n");
 
   // must supply min of 74 clock cycles with CS high.
   for (uint8_t i = 0; i < 10; i++) {
@@ -96,7 +102,7 @@ BOOL sdcard_setup() {
       goto fail;
     }
   }
-  
+
   // if SD2 read OCR register to check for SDHC card
   if (_sdcard_type == SD_CARD_TYPE_SD2) {
     if (_sdcard_command(CMD58, 0)) {
@@ -111,7 +117,7 @@ BOOL sdcard_setup() {
       _sdcard_spi_transfer(0xff);
     }
   }
-  
+
   _sdcard_cs_deassert();
   printf("END SDCard Setup (type: %u)\n", _sdcard_type);
 
