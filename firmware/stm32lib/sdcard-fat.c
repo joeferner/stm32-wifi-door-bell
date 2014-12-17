@@ -7,15 +7,15 @@
 #include "sdcard-fat-structs.h"
 #include "util.h"
 
-#define CACHE_FOR_READ        1
-#define CACHE_FOR_WRITE       2
+static uint8_t const CACHE_FOR_READ  = 1;
+static uint8_t const CACHE_FOR_WRITE = 2;
 
-#define FAT_FILE_TYPE_CLOSED  0
-#define FAT_FILE_TYPE_NORMAL  1
-#define FAT_FILE_TYPE_ROOT16  2
-#define FAT_FILE_TYPE_ROOT32  3
-#define FAT_FILE_TYPE_SUBDIR  4
-#define FAT_FILE_TYPE_MIN_DIR FAT_FILE_TYPE_ROOT16
+static uint8_t const FAT_FILE_TYPE_CLOSED  = 0;
+static uint8_t const FAT_FILE_TYPE_NORMAL  = 1;
+static uint8_t const FAT_FILE_TYPE_ROOT16  = 2;
+static uint8_t const FAT_FILE_TYPE_ROOT32  = 3;
+static uint8_t const FAT_FILE_TYPE_SUBDIR  = 4;
+#define              FAT_FILE_TYPE_MIN_DIR   FAT_FILE_TYPE_ROOT16
 
 /** Default date for file timestamps is 1 Jan 2000 */
 uint16_t const FAT_DEFAULT_DATE = ((2000 - 1980) << 9) | (1 << 5) | 1;
