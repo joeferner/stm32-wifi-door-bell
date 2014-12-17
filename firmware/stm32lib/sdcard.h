@@ -8,10 +8,10 @@
 
 #include "util.h"
 
-void sdcard_setup_gpio();
+void sdcard_setupGpio();
 BOOL sdcard_setup();
-BOOL sdcard_read_block(uint32_t blockNumber, uint8_t* data);
-BOOL sdcard_write_block(uint32_t blockNumber, const uint8_t* data);
+BOOL sdcard_readBlock(uint32_t blockNumber, uint8_t* data);
+BOOL sdcard_writeBlock(uint32_t blockNumber, const uint8_t* data);
 
 #endif
 #endif

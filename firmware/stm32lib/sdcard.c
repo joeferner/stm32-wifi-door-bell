@@ -33,10 +33,10 @@ void _sdcard_cs_assert();
 uint8_t _sdcard_spi_transfer(uint8_t d);
 uint8_t _sdcard_command(uint8_t cmd, uint32_t arg);
 uint8_t _sdcard_acommand(uint8_t acmd, uint32_t arg);
-uint8_t _sdcard_wait_start_block();
-uint8_t _sdcard_wait_not_busy(uint16_t timeoutMillis);
+uint8_t _sdcard_waitStartBlock();
+uint8_t _sdcard_waitNotBusy(uint16_t timeoutMillis);
 
-void sdcard_setup_gpio() {
+void sdcard_setupGpio() {
   GPIO_InitTypeDef gpioInitStructure;
 
   printf("BEGIN SDCard Setup GPIO\n");
@@ -137,7 +137,7 @@ void _sdcard_cs_assert() {
   GPIO_ResetBits(SDCARD_CS, SDCARD_CS_PIN);
 }
 
-BOOL sdcard_read_block(uint32_t block, uint8_t* data) {
+BOOL sdcard_readBlock(uint32_t block, uint8_t* data) {
   uint16_t n;
 
   // use address if not SDHC card
@@ -150,7 +150,7 @@ BOOL sdcard_read_block(uint32_t block, uint8_t* data) {
     goto fail;
   }
 
-  if (!_sdcard_wait_start_block()) {
+  if (!_sdcard_waitStartBlock()) {
     goto fail;
   }
 
@@ -166,7 +166,7 @@ fail:
   return FALSE;
 }
 
-BOOL sdcard_write_block(uint32_t blockNumber, const uint8_t* data) {
+BOOL sdcard_writeBlock(uint32_t blockNumber, const uint8_t* data) {
   int16_t crc = 0xffff; // Dummy CRC value
   int i;
 
@@ -200,7 +200,7 @@ BOOL sdcard_write_block(uint32_t blockNumber, const uint8_t* data) {
   }
 
   // wait for flash programming to complete
-  if (!_sdcard_wait_not_busy(SD_WRITE_TIMEOUT)) {
+  if (!_sdcard_waitNotBusy(SD_WRITE_TIMEOUT)) {
     printf("SD_CARD_ERROR_WRITE_TIMEOUT\n");
     goto fail;
   }
@@ -224,7 +224,7 @@ uint8_t _sdcard_command(uint8_t cmd, uint32_t arg) {
 
   _sdcard_cs_assert();
 
-  _sdcard_wait_not_busy(SD_READ_TIMEOUT);
+  _sdcard_waitNotBusy(SD_READ_TIMEOUT);
 
   // send command
   _sdcard_spi_transfer(cmd | 0x40);
@@ -262,7 +262,7 @@ uint8_t _sdcard_spi_transfer(uint8_t d) {
   return SPI_I2S_ReceiveData(SDCARD_SPI);
 }
 
-uint8_t _sdcard_wait_start_block() {
+uint8_t _sdcard_waitStartBlock() {
   uint8_t status;
   uint16_t t0 = time_ms();
   while ((status = _sdcard_spi_transfer(0xff)) == 0XFF) {
@@ -282,7 +282,7 @@ fail:
   return FALSE;
 }
 
-uint8_t _sdcard_wait_not_busy(uint16_t timeoutMillis) {
+uint8_t _sdcard_waitNotBusy(uint16_t timeoutMillis) {
   uint16_t t0 = time_ms();
   do {
     if (_sdcard_spi_transfer(0xff) == 0XFF) {

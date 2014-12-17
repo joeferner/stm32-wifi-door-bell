@@ -32,7 +32,7 @@ void setup() {
 
   debug_setup();
   spi_setup();
-  sdcard_setup_gpio();
+  sdcard_setupGpio();
 
   if (!sdcard_setup()) {
     printf("Failed to setup SDCard\n");

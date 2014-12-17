@@ -44,9 +44,9 @@ typedef union {
   dir_t    dir[16]; // Used to access cached directory entries.
   mbr_t    mbr; // Used to access a cached MasterBoot Record.
   fbs_t    fbs; // Used to access to a cached FAT boot sector.
-} SdCardCache;
+} SdcardCache;
 
-SdCardCache _sdcard_fat_cache;
+SdcardCache _sdcard_fat_cache;
 uint32_t _sdcard_fat_cacheBlockNumber;
 uint8_t _sdcard_fat_cacheDirty;
 uint32_t _sdcard_fat_cacheMirrorBlock;  // block number for mirror FAT
@@ -63,30 +63,31 @@ uint16_t _sdcard_fat_rootDirEntryCount;  // number of entries in FAT16 root dir
 uint32_t _sdcard_fat_rootDirStart;       // root start block for FAT16, cluster for FAT32
 SdcardFatFile _sdcard_fat_root;
 
-BOOL _sdcard_fat_read_volume(int part);
+BOOL _sdcard_fat_readVolume(int part);
 BOOL _sdcard_fat_cacheRead(uint32_t block, int action);
 BOOL _sdcard_fat_cacheFlush();
-BOOL _sdcard_fat_get_parent_dir(SdcardFatFile* f, const char* filePath, int* pathIdx);
-BOOL _sdcard_fat_open_file(SdcardFatFile* f, SdcardFatFile* parentDir, const char* fileName, int mode);
 BOOL _sdcard_fat_get(uint32_t cluster, uint32_t* value);
 BOOL _sdcard_fat_put(uint32_t cluster, uint32_t value);
 BOOL _sdcard_fat_fatPutEOC(uint32_t cluster);
 BOOL _sdcard_fat_make83Name(const char* fileName, char* name);
 BOOL _sdcard_fat_chainSize(uint32_t cluster, uint32_t* size);
 BOOL _sdcard_fat_isEOC(uint32_t cluster);
-dir_t* _sdcard_fat_readDirCache(SdcardFatFile* f);
-int16_t _sdcard_fat_read_byte(SdcardFatFile* f);
-int16_t _sdcard_fat_read(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte);
 uint8_t _sdcard_fat_blockOfCluster(uint32_t position);
 uint32_t _sdcard_fat_clusterStartBlock(uint32_t cluster);
 BOOL _sdcard_fat_cacheRawBlock(uint32_t blockNumber, uint8_t action);
-dir_t* _sdcard_fat_cacheDirEntry(SdcardFatFile* f, uint8_t action);
-uint8_t _sdcard_fat_addDirCluster(SdcardFatFile* f);
-BOOL _sdcard_fat_truncate(SdcardFatFile* f, uint32_t length);
 BOOL _sdcard_fat_freeChain(uint32_t cluster);
 BOOL _sdcard_fat_allocContiguous(uint32_t count, uint32_t* curCluster);
-BOOL _sdcard_fat_sync(SdcardFatFile* f);
 BOOL _sdcard_fat_cacheZeroBlock(uint32_t blockNumber);
+
+BOOL _sdcard_fat_file_get_parent_dir(SdcardFatFile* f, const char* filePath, int* pathIdx);
+BOOL _sdcard_fat_file_open_file(SdcardFatFile* f, SdcardFatFile* parentDir, const char* fileName, int mode);
+dir_t* _sdcard_fat_file_readDirCache(SdcardFatFile* f);
+int16_t _sdcard_fat_file_read_byte(SdcardFatFile* f);
+int16_t _sdcard_fat_file_read(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte);
+dir_t* _sdcard_fat_file_cacheDirEntry(SdcardFatFile* f, uint8_t action);
+uint8_t _sdcard_fat_file_addDirCluster(SdcardFatFile* f);
+BOOL _sdcard_fat_file_truncate(SdcardFatFile* f, uint32_t length);
+BOOL _sdcard_fat_file_sync(SdcardFatFile* f);
 
 BOOL sdcard_fat_setup() {
   printf("BEGIN SDCard Fat Setup\n");
@@ -94,8 +95,8 @@ BOOL sdcard_fat_setup() {
   _sdcard_fat_cacheDirty = 0;
   _sdcard_fat_cacheMirrorBlock = 0;
 
-  if (!_sdcard_fat_read_volume(1)) {
-    if (!_sdcard_fat_read_volume(0)) {
+  if (!_sdcard_fat_readVolume(1)) {
+    if (!_sdcard_fat_readVolume(0)) {
       return FALSE;
     }
   }
@@ -103,7 +104,7 @@ BOOL sdcard_fat_setup() {
   return TRUE;
 }
 
-BOOL _sdcard_fat_read_volume(int part) {
+BOOL _sdcard_fat_readVolume(int part) {
   uint32_t volumeStartBlock = 0;
 
   if (part > 4) {
@@ -189,7 +190,7 @@ BOOL _sdcard_fat_read_volume(int part) {
   return TRUE;
 }
 
-BOOL _sdcard_fat_get_parent_dir(SdcardFatFile* f, const char* filePath, int* pathIdx) {
+BOOL _sdcard_fat_file_get_parent_dir(SdcardFatFile* f, const char* filePath, int* pathIdx) {
   SdcardFatFile* parent = &_sdcard_fat_root; // start with the mostparent, root!
   SdcardFatFile* subdir;
   SdcardFatFile* t;
@@ -398,7 +399,7 @@ BOOL _sdcard_fat_openCachedEntry(SdcardFatFile* f, uint8_t dirIndex, uint8_t mod
 
   // truncate file to zero length if requested
   if (mode & O_TRUNC) {
-    return _sdcard_fat_truncate(f, 0);
+    return _sdcard_fat_file_truncate(f, 0);
   }
   return TRUE;
 }
@@ -416,7 +417,7 @@ BOOL _sdcard_fat_cacheRawBlock(uint32_t blockNumber, uint8_t action) {
     if (!_sdcard_fat_cacheFlush()) {
       return FALSE;
     }
-    if (!sdcard_read_block(blockNumber, _sdcard_fat_cache.data)) {
+    if (!sdcard_readBlock(blockNumber, _sdcard_fat_cache.data)) {
       return FALSE;
     }
     _sdcard_fat_cacheBlockNumber = blockNumber;
@@ -425,7 +426,7 @@ BOOL _sdcard_fat_cacheRawBlock(uint32_t blockNumber, uint8_t action) {
   return TRUE;
 }
 
-int16_t _sdcard_fat_read(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte) {
+int16_t _sdcard_fat_file_read(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte) {
   // error if not open or write only
   if (IS_CLOSED(f) || !(f->flags & O_READ)) {
     return -1;
@@ -481,15 +482,15 @@ int16_t _sdcard_fat_read(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte) {
   return nbyte;
 }
 
-int16_t _sdcard_fat_read_byte(SdcardFatFile* f) {
+int16_t _sdcard_fat_file_read_byte(SdcardFatFile* f) {
   uint8_t b;
-  return _sdcard_fat_read(f, &b, 1) == 1 ? b : -1;
+  return _sdcard_fat_file_read(f, &b, 1) == 1 ? b : -1;
 }
 
 //------------------------------------------------------------------------------
 // Read next directory entry into the cache
 // Assumes file is correctly positioned
-dir_t* _sdcard_fat_readDirCache(SdcardFatFile* f) {
+dir_t* _sdcard_fat_file_readDirCache(SdcardFatFile* f) {
   // error if not directory
   if (!IS_DIR(f)) {
     return NULL;
@@ -499,7 +500,7 @@ dir_t* _sdcard_fat_readDirCache(SdcardFatFile* f) {
   uint8_t i = (f->currentPosition >> 5) & 0XF;
 
   // use read to locate and cache block
-  if (_sdcard_fat_read_byte(f) < 0) {
+  if (_sdcard_fat_file_read_byte(f) < 0) {
     return NULL;
   }
 
@@ -513,7 +514,7 @@ dir_t* _sdcard_fat_readDirCache(SdcardFatFile* f) {
 //------------------------------------------------------------------------------
 // cache a file's directory entry
 // return pointer to cached entry or null for failure
-dir_t* _sdcard_fat_cacheDirEntry(SdcardFatFile* f, uint8_t action) {
+dir_t* _sdcard_fat_file_cacheDirEntry(SdcardFatFile* f, uint8_t action) {
   if (!_sdcard_fat_cacheRawBlock(f->dirBlock, action)) {
     return NULL;
   }
@@ -632,14 +633,14 @@ uint8_t _sdcard_fat_addCluster(SdcardFatFile* f) {
  * Reasons for failure include a call to sync() before a file has been
  * opened or an I/O error.
  */
-BOOL _sdcard_fat_sync(SdcardFatFile* f) {
+BOOL _sdcard_fat_file_sync(SdcardFatFile* f) {
   // only allow open files and directories
   if (IS_CLOSED(f)) {
     return FALSE;
   }
 
   if (f->flags & F_FILE_DIR_DIRTY) {
-    dir_t* d = _sdcard_fat_cacheDirEntry(f, CACHE_FOR_WRITE);
+    dir_t* d = _sdcard_fat_file_cacheDirEntry(f, CACHE_FOR_WRITE);
     if (!d) {
       return FALSE;
     }
@@ -675,7 +676,7 @@ BOOL _sdcard_fat_sync(SdcardFatFile* f) {
  * Reasons for failure include file is read only, file is a directory,
  * \a length is greater than the current file size or an I/O error occurs.
  */
-BOOL _sdcard_fat_truncate(SdcardFatFile* f, uint32_t length) {
+BOOL _sdcard_fat_file_truncate(SdcardFatFile* f, uint32_t length) {
 // error if not a normal file or read-only
   if (!IS_FILE(f) || !(f->flags & O_WRITE)) {
     return FALSE;
@@ -728,7 +729,7 @@ BOOL _sdcard_fat_truncate(SdcardFatFile* f, uint32_t length) {
   // need to update directory entry
   f->flags |= F_FILE_DIR_DIRTY;
 
-  if (!_sdcard_fat_sync(f)) {
+  if (!_sdcard_fat_file_sync(f)) {
     return FALSE;
   }
 
@@ -755,7 +756,7 @@ BOOL _sdcard_fat_cacheZeroBlock(uint32_t blockNumber) {
 //------------------------------------------------------------------------------
 // Add a cluster to a directory file and zero the cluster.
 // return with first block of cluster in the cache
-uint8_t _sdcard_fat_addDirCluster(SdcardFatFile* f) {
+uint8_t _sdcard_fat_file_addDirCluster(SdcardFatFile* f) {
   if (!_sdcard_fat_addCluster(f)) {
     return FALSE;
   }
@@ -772,7 +773,7 @@ uint8_t _sdcard_fat_addDirCluster(SdcardFatFile* f) {
   return TRUE;
 }
 
-BOOL _sdcard_fat_open_file(SdcardFatFile* f, SdcardFatFile* dirFile, const char* fileName, int mode) {
+BOOL _sdcard_fat_file_open_file(SdcardFatFile* f, SdcardFatFile* dirFile, const char* fileName, int mode) {
   char dname[11];
   dir_t* p;
 
@@ -793,7 +794,7 @@ BOOL _sdcard_fat_open_file(SdcardFatFile* f, SdcardFatFile* dirFile, const char*
   // search for file
   while (dirFile->currentPosition < dirFile->fileSize) {
     uint8_t index = 0XF & (dirFile->currentPosition >> 5);
-    p = _sdcard_fat_readDirCache(dirFile);
+    p = _sdcard_fat_file_readDirCache(dirFile);
     if (p == NULL) {
       return FALSE;
     }
@@ -825,7 +826,7 @@ BOOL _sdcard_fat_open_file(SdcardFatFile* f, SdcardFatFile* dirFile, const char*
 
   // cache found slot or add cluster if end of file
   if (emptyFound) {
-    p = _sdcard_fat_cacheDirEntry(f, CACHE_FOR_WRITE);
+    p = _sdcard_fat_file_cacheDirEntry(f, CACHE_FOR_WRITE);
     if (!p) {
       return FALSE;
     }
@@ -835,7 +836,7 @@ BOOL _sdcard_fat_open_file(SdcardFatFile* f, SdcardFatFile* dirFile, const char*
     }
 
     // add and zero cluster for dirFile - first cluster is in cache for write
-    if (!_sdcard_fat_addDirCluster(dirFile)) {
+    if (!_sdcard_fat_file_addDirCluster(dirFile)) {
       return FALSE;
     }
 
@@ -924,7 +925,7 @@ BOOL _sdcard_fat_freeChain(uint32_t cluster) {
 BOOL sdcard_fat_open(SdcardFatFile* f, const char* filePath, int mode) {
   int pathidx;
 
-  if (!_sdcard_fat_get_parent_dir(f, filePath, &pathidx)) {
+  if (!_sdcard_fat_file_get_parent_dir(f, filePath, &pathidx)) {
     return FALSE;
   }
   filePath += pathidx;
@@ -941,13 +942,13 @@ BOOL sdcard_fat_open(SdcardFatFile* f, const char* filePath, int mode) {
 
   // there is a special case for the Root directory since its a static dir
   if (IS_ROOT(f)) {
-    if (!_sdcard_fat_open_file(f, &_sdcard_fat_root, filePath, mode)) {
+    if (!_sdcard_fat_file_open_file(f, &_sdcard_fat_root, filePath, mode)) {
       return FALSE;
     }
     // dont close the root!
   } else {
     // TODO: close parent dir
-    if (!_sdcard_fat_open_file(f, f, filePath, mode)) {
+    if (!_sdcard_fat_file_open_file(f, f, filePath, mode)) {
       return FALSE;
     }
   }
@@ -965,12 +966,12 @@ void sdcard_fat_close(SdcardFatFile* f) {
 
 BOOL _sdcard_fat_cacheFlush() {
   if (_sdcard_fat_cacheDirty) {
-    if (!sdcard_write_block(_sdcard_fat_cacheBlockNumber, _sdcard_fat_cache.data)) {
+    if (!sdcard_writeBlock(_sdcard_fat_cacheBlockNumber, _sdcard_fat_cache.data)) {
       return FALSE;
     }
     // mirror FAT tables
     if (_sdcard_fat_cacheMirrorBlock) {
-      if (!sdcard_write_block(_sdcard_fat_cacheBlockNumber, _sdcard_fat_cache.data)) {
+      if (!sdcard_writeBlock(_sdcard_fat_cacheBlockNumber, _sdcard_fat_cache.data)) {
         return FALSE;
       }
       _sdcard_fat_cacheMirrorBlock = 0;
@@ -985,7 +986,7 @@ BOOL _sdcard_fat_cacheRead(uint32_t blockNumber, int action) {
     if (!_sdcard_fat_cacheFlush()) {
       return FALSE;
     }
-    if (!sdcard_read_block(blockNumber, _sdcard_fat_cache.data)) {
+    if (!sdcard_readBlock(blockNumber, _sdcard_fat_cache.data)) {
       return FALSE;
     }
     _sdcard_fat_cacheBlockNumber = blockNumber;
