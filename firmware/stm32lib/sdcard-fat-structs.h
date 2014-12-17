@@ -2,6 +2,48 @@
 #ifndef _SDCARD_FAT_STRUCTS_H_
 #define _SDCARD_FAT_STRUCTS_H_
 
+//------------------------------------------------------------------------------
+// End Of Chain values for FAT entries
+/** FAT16 end of chain value used by Microsoft. */
+uint16_t const FAT16EOC = 0XFFFF;
+/** Minimum value for FAT16 EOC.  Use to test for EOC. */
+uint16_t const FAT16EOC_MIN = 0XFFF8;
+/** FAT32 end of chain value used by Microsoft. */
+uint32_t const FAT32EOC = 0X0FFFFFFF;
+/** Minimum value for FAT32 EOC.  Use to test for EOC. */
+uint32_t const FAT32EOC_MIN = 0X0FFFFFF8;
+/** Mask a for FAT32 entry. Entries are 28 bits. */
+uint32_t const FAT32MASK = 0X0FFFFFFF;
+
+/** escape for name[0] = 0XE5 */
+uint8_t const DIR_NAME_0XE5 = 0X05;
+/** name[0] value for entry that is free after being "deleted" */
+uint8_t const DIR_NAME_DELETED = 0XE5;
+/** name[0] value for entry that is free and no allocated entries follow */
+uint8_t const DIR_NAME_FREE = 0X00;
+/** file is read-only */
+uint8_t const DIR_ATT_READ_ONLY = 0X01;
+/** File should hidden in directory listings */
+uint8_t const DIR_ATT_HIDDEN = 0X02;
+/** Entry is for a system file */
+uint8_t const DIR_ATT_SYSTEM = 0X04;
+/** Directory entry contains the volume label */
+uint8_t const DIR_ATT_VOLUME_ID = 0X08;
+/** Entry is for a directory */
+uint8_t const DIR_ATT_DIRECTORY = 0X10;
+/** Old DOS archive bit for backup support */
+uint8_t const DIR_ATT_ARCHIVE = 0X20;
+/** Test value for long name entry.  Test is
+  (d->attributes & DIR_ATT_LONG_NAME_MASK) == DIR_ATT_LONG_NAME. */
+uint8_t const DIR_ATT_LONG_NAME = 0X0F;
+/** Test mask for long name entry */
+uint8_t const DIR_ATT_LONG_NAME_MASK = 0X3F;
+/** defined attribute bits */
+uint8_t const DIR_ATT_DEFINED_BITS = 0X3F;
+
+/** Mask for file/subdirectory tests */
+#define DIR_ATT_FILE_TYPE_MASK (DIR_ATT_VOLUME_ID | DIR_ATT_DIRECTORY)
+
 /**
  * \struct biosParmBlock
  *

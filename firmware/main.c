@@ -33,7 +33,7 @@ void setup() {
   debug_setup();
   spi_setup();
   sdcard_setup_gpio();
-  
+
   if (!sdcard_setup()) {
     printf("Failed to setup SDCard\n");
   } else {
@@ -42,8 +42,8 @@ void setup() {
     }
   }
 
-  SDCARD_FAT_FILE f;
-  if (!sdcard_fat_open(&f, "test.txt", SDCARD_FAT_READ)) {
+  SdcardFatFile f;
+  if (!sdcard_fat_open(&f, "test.txt", O_RDONLY)) {
     printf("Failed to open test.txt\n");
   } else {
     printf("opened test.txt\n");
@@ -54,6 +54,12 @@ void setup() {
 void loop() {
   printf("loop\n");
   delay_ms(5000);
+}
+
+void sdcard_fat_getTime(SdcardFatFile* f, uint16_t* creationDate, uint16_t* creationTime) {
+  // TODO set these
+  *creationDate = FAT_DEFAULT_DATE;
+  *creationTime = FAT_DEFAULT_TIME;
 }
 
 void assert_failed(uint8_t* file, uint32_t line) {
