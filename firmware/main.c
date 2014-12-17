@@ -1,11 +1,13 @@
 #include <stm32f10x_gpio.h>
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_spi.h>
+#include <stm32f10x_rtc.h>
 #include <misc.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "platform_config.h"
+#include "rtc.h"
 #include "stm32lib/debug.h"
 #include "stm32lib/delay.h"
 #include "stm32lib/time.h"
@@ -31,6 +33,7 @@ void setup() {
   time_setup();
 
   debug_setup();
+  //rtc_setup();
   spi_setup();
   sdcard_setupGpio();
 
@@ -43,11 +46,17 @@ void setup() {
   }
 
   SdcardFatFile f;
-  if (!sdcard_fat_open(&f, "test.txt", O_RDONLY)) {
+  if (!sdcard_fat_file_open(&f, "test.txt", O_RDONLY)) {
     printf("Failed to open test.txt\n");
   } else {
-    printf("opened test.txt\n");
-    sdcard_fat_close(&f);
+    char buffer[100];
+    printf("opened test.txt (size %lu)\n", sdcard_fat_file_available(&f));
+    if (sdcard_fat_file_read(&f, (uint8_t*)buffer, sizeof(buffer)) >= 0) {
+      printf("FILE: %s\n", buffer);
+    } else {
+      printf("Read failed\n");
+    }
+    sdcard_fat_file_close(&f);
   }
 }
 
@@ -57,8 +66,8 @@ void loop() {
 }
 
 void sdcard_fat_getTime(SdcardFatFile* f, uint16_t* creationDate, uint16_t* creationTime) {
-  // TODO set these
-  *creationDate = FAT_DEFAULT_DATE;
+  uint32_t rtc = RTC_GetCounter();
+  *creationDate = rtc / (24 * 60 * 60);
   *creationTime = FAT_DEFAULT_TIME;
 }
 

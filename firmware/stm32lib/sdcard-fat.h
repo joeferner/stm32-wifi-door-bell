@@ -49,6 +49,46 @@ extern uint16_t const FAT_DEFAULT_DATE;
 /** Default time for file timestamp is 1 am */
 extern uint16_t const FAT_DEFAULT_TIME;
 
+/** date field for FAT directory entry */
+static inline uint16_t FAT_DATE(uint16_t year, uint8_t month, uint8_t day) {
+  return (year - 1980) << 9 | month << 5 | day;
+}
+
+/** year part of FAT directory date field */
+static inline uint16_t FAT_YEAR(uint16_t fatDate) {
+  return 1980 + (fatDate >> 9);
+}
+
+/** month part of FAT directory date field */
+static inline uint8_t FAT_MONTH(uint16_t fatDate) {
+  return (fatDate >> 5) & 0XF;
+}
+
+/** day part of FAT directory date field */
+static inline uint8_t FAT_DAY(uint16_t fatDate) {
+  return fatDate & 0X1F;
+}
+
+/** time field for FAT directory entry */
+static inline uint16_t FAT_TIME(uint8_t hour, uint8_t minute, uint8_t second) {
+  return hour << 11 | minute << 5 | second >> 1;
+}
+
+/** hour part of FAT directory time field */
+static inline uint8_t FAT_HOUR(uint16_t fatTime) {
+  return fatTime >> 11;
+}
+
+/** minute part of FAT directory time field */
+static inline uint8_t FAT_MINUTE(uint16_t fatTime) {
+  return (fatTime >> 5) & 0X3F;
+}
+
+/** second part of FAT directory time field */
+static inline uint8_t FAT_SECOND(uint16_t fatTime) {
+  return 2 * (fatTime & 0X1F);
+}
+
 typedef struct {
   uint8_t type;
   uint32_t fileSize;
@@ -64,9 +104,14 @@ typedef struct {
 extern void sdcard_fat_getTime(SdcardFatFile* f, uint16_t* creationDate, uint16_t* creationTime);
 
 BOOL sdcard_fat_setup();
-BOOL sdcard_fat_open(SdcardFatFile* f, const char* filePath, int mode);
-void sdcard_fat_close(SdcardFatFile* f);
-BOOL sdcard_fat_seek(SdcardFatFile* f, uint32_t pos);
+BOOL sdcard_fat_file_open(SdcardFatFile* f, const char* filePath, int mode);
+void sdcard_fat_file_close(SdcardFatFile* f);
+BOOL sdcard_fat_file_seek(SdcardFatFile* f, uint32_t pos);
+uint32_t sdcard_fat_file_available(SdcardFatFile* f);
+uint32_t sdcard_fat_file_size(SdcardFatFile* f);
+uint32_t sdcard_fat_file_position(SdcardFatFile* f);
+int16_t sdcard_fat_file_readByte(SdcardFatFile* f);
+int16_t sdcard_fat_file_read(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte);
 
 #endif
 #endif
