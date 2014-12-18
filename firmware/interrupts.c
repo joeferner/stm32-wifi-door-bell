@@ -82,6 +82,10 @@ void prvGetRegistersFromStack(uint32_t* pulFaultStackAddress) {
   for (;;);
 }
 
+void WWDG_IRQHandler() {
+  printf("WWDG_IRQHandler\n");
+}
+
 void EXTI1_IRQHandler() {
 #ifdef CC3000_ENABLE
   if (EXTI_GetITStatus(CC3000_IRQ_EXTI_LINE) != RESET) {

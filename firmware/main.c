@@ -2,6 +2,7 @@
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_spi.h>
 #include <stm32f10x_rtc.h>
+#include <stm32f10x_wwdg.h>
 #include <misc.h>
 #include <string.h>
 #include <stdlib.h>
@@ -31,6 +32,7 @@ void setup() {
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
   GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+  WWDG_DeInit();
   time_setup();
 
   debug_setup();
@@ -69,7 +71,9 @@ void setup() {
 #define WLAN_PASS       "Ferner7037727884"
 #define WLAN_SECURITY   WLAN_SEC_WPA2
 
-  if (!cc3000_connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
+  if (cc3000_connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
+    printf("Connected\n");
+  } else {
     printf("failed cc3000 connect to ap\n");
   }
 }

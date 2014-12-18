@@ -9,6 +9,7 @@
 #include "cc3000-host-driver/netapp.h"
 #include "cc3000-host-driver/cc3000_common.h"
 #include "cc3000-host-driver/socket.h"
+#include "cc3000-host-driver/nvmem.h"
 #include "util.h"
 #include "spi.h"
 #include "delay.h"
@@ -95,6 +96,7 @@ void _cc3000_spiFirstWrite(uint8_t* buffer, uint16_t length);
 BOOL _cc3000_scanSSIDs(uint32_t time);
 BOOL _cc3000_connectOpen(const char* ssid);
 BOOL _cc3000_connectSecure(const char* ssid, const char* key, int32_t secMode);
+BOOL _cc3000_getFirmwareVersion(uint8_t* major, uint8_t* minor);
 
 void cc3000_setupGpio() {
   GPIO_InitTypeDef gpioInitStructure;
@@ -155,6 +157,14 @@ BOOL cc3000_setup(uint8_t patchReq, BOOL useSmartConfigData, const char* deviceN
   );
 
   wlan_start(patchReq);
+
+  uint8_t firmwareMajor, firmwareMinor;
+  if (_cc3000_getFirmwareVersion(&firmwareMajor, &firmwareMinor)) {
+    printf("CC3000 firmware: %d.%d\n", firmwareMajor, firmwareMinor);
+  } else {
+    printf("failed to get firmware\n");
+    return FALSE;
+  }
 
   // Check if we should erase previous stored connection details
   // (most likely written with data from the SmartConfig app)
@@ -220,6 +230,22 @@ void _cc3000_en_assert() {
 
 void _cc3000_en_deassert() {
   GPIO_ResetBits(CC3000_EN, CC3000_EN_PIN);
+}
+
+extern void SpiReceiveHandler(void* pvBuffer);
+
+BOOL _cc3000_getFirmwareVersion(uint8_t* major, uint8_t* minor) {
+  uint8_t fwpReturn[2];
+
+  if (nvmem_read_sp_version(fwpReturn) != CC3000_SUCCESS) {
+    printf("Unable to read the firmware version\n");
+    return FALSE;
+  }
+
+  *major = fwpReturn[0];
+  *minor = fwpReturn[1];
+
+  return TRUE;
 }
 
 BOOL cc3000_connectToAP(const char* ssid, const char* key, uint8_t secmode) {
@@ -369,7 +395,7 @@ char* _cc3000_sendBootLoaderPatches(unsigned long* length) {
 }
 
 long _cc3000_readWlanInterruptPin() {
-  return GPIO_ReadInputDataBit(CC3000_IRQ, CC3000_IRQ_PIN);
+  return GPIO_ReadInputDataBit(CC3000_IRQ, CC3000_IRQ_PIN) == Bit_SET;
 }
 
 void _cc3000_wlanInterruptEnable() {
