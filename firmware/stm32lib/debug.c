@@ -126,40 +126,4 @@ void debug_write(uint8_t b) {
   while (USART_GetFlagStatus(DEBUG_USART, USART_FLAG_TXE) == RESET);
 }
 
-int _read(int file, char* ptr, int len) {
-  int n;
-  int num = 0;
-  switch (file) {
-    case STDIN_FILENO:
-      for (n = 0; n < len; n++) {
-        *ptr++ = (char)debug_read();
-        num++;
-      }
-      break;
-    default:
-      errno = EBADF;
-      return -1;
-  }
-  return num;
-}
-
-int _write(int file, char* ptr, int len) {
-  int n;
-  switch (file) {
-    case STDOUT_FILENO: /*stdout*/
-      for (n = 0; n < len; n++) {
-        debug_write(*ptr++);
-      }
-      break;
-    case STDERR_FILENO: /* stderr */
-      for (n = 0; n < len; n++) {
-        debug_write(*ptr++);
-      }
-      break;
-    default:
-      errno = EBADF;
-      return -1;
-  }
-  return len;
-}
 

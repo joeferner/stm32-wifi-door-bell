@@ -32,9 +32,9 @@ void spi_setup() {
   spiInitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;
   spiInitStruct.SPI_FirstBit = SPI_FirstBit_MSB;
 
-  // Mode 0 (CPOL = 0, CPHA = 0)
+  // Mode 1 (CPOL = 0, CPHA = 1)
   spiInitStruct.SPI_CPOL = SPI_CPOL_Low;
-  spiInitStruct.SPI_CPHA = SPI_CPHA_1Edge;
+  spiInitStruct.SPI_CPHA = SPI_CPHA_2Edge;
 
   SPI_Init(SPI1, &spiInitStruct);
 
@@ -76,4 +76,12 @@ void spi_setup() {
 #endif
 
   printf("END SPI Setup\n");
+}
+
+uint8_t spi_transfer(SPI_TypeDef* spi, uint8_t d) {
+  SPI_I2S_SendData(spi, d);
+  while (SPI_I2S_GetFlagStatus(spi, SPI_I2S_FLAG_TXE) == RESET);
+  while (SPI_I2S_GetFlagStatus(spi, SPI_I2S_FLAG_RXNE) == RESET);
+  while (SPI_I2S_GetFlagStatus(spi, SPI_I2S_FLAG_BSY) == SET);
+  return SPI_I2S_ReceiveData(spi);
 }

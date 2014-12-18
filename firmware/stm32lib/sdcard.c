@@ -5,6 +5,7 @@
 #include <stm32f10x_gpio.h>
 #include <stm32f10x_spi.h>
 #include "sdcard-info.h"
+#include "spi.h"
 
 #ifdef SDCARD_ENABLE
 
@@ -30,7 +31,7 @@ uint8_t _sdcard_type;
 
 void _sdcard_cs_deassert();
 void _sdcard_cs_assert();
-uint8_t _sdcard_spi_transfer(uint8_t d);
+uint8_t _sdcard_spiTransfer(uint8_t d);
 uint8_t _sdcard_command(uint8_t cmd, uint32_t arg);
 uint8_t _sdcard_acommand(uint8_t acmd, uint32_t arg);
 uint8_t _sdcard_waitStartBlock();
@@ -64,7 +65,7 @@ BOOL sdcard_setup() {
 
   // must supply min of 74 clock cycles with CS high.
   for (uint8_t i = 0; i < 10; i++) {
-    _sdcard_spi_transfer(0XFF);
+    _sdcard_spiTransfer(0XFF);
   }
 
   _sdcard_cs_assert();
@@ -83,7 +84,7 @@ BOOL sdcard_setup() {
   } else {
     // only need last byte of r7 response
     for (uint8_t i = 0; i < 4; i++) {
-      status = _sdcard_spi_transfer(0xff);
+      status = _sdcard_spiTransfer(0xff);
     }
     if (status != 0XAA) {
       printf("SD_CARD_ERROR_CMD8\n");
@@ -109,12 +110,12 @@ BOOL sdcard_setup() {
       printf("SD_CARD_ERROR_CMD58\n");
       goto fail;
     }
-    if ((_sdcard_spi_transfer(0xff) & 0XC0) == 0XC0) {
+    if ((_sdcard_spiTransfer(0xff) & 0XC0) == 0XC0) {
       _sdcard_type = SD_CARD_TYPE_SDHC;
     }
     // discard rest of ocr - contains allowed voltage range
     for (uint8_t i = 0; i < 3; i++) {
-      _sdcard_spi_transfer(0xff);
+      _sdcard_spiTransfer(0xff);
     }
   }
 
@@ -155,7 +156,7 @@ BOOL sdcard_readBlock(uint32_t block, uint8_t* data) {
   }
 
   for (n = 0; n < SDCARD_BLOCK_SIZE; n++) {
-    data[n] = _sdcard_spi_transfer(0xff);
+    data[n] = _sdcard_spiTransfer(0xff);
   }
 
   _sdcard_cs_deassert();
@@ -186,15 +187,15 @@ BOOL sdcard_writeBlock(uint32_t blockNumber, const uint8_t* data) {
     goto fail;
   }
 
-  _sdcard_spi_transfer(DATA_START_BLOCK);
+  _sdcard_spiTransfer(DATA_START_BLOCK);
   for (i = 0; i < SDCARD_BLOCK_SIZE; i++) {
-    _sdcard_spi_transfer(data[i]);
+    _sdcard_spiTransfer(data[i]);
   }
 
-  _sdcard_spi_transfer(crc >> 8);
-  _sdcard_spi_transfer(crc);
+  _sdcard_spiTransfer(crc >> 8);
+  _sdcard_spiTransfer(crc);
 
-  if ((_sdcard_spi_transfer(0xff) & DATA_RES_MASK) != DATA_RES_ACCEPTED) {
+  if ((_sdcard_spiTransfer(0xff) & DATA_RES_MASK) != DATA_RES_ACCEPTED) {
     printf("SD_CARD_ERROR_WRITE\n");
     goto fail;
   }
@@ -206,7 +207,7 @@ BOOL sdcard_writeBlock(uint32_t blockNumber, const uint8_t* data) {
   }
 
   // response is r2 so get and check two bytes for nonzero
-  if (_sdcard_command(CMD13, 0) || _sdcard_spi_transfer(0xff)) {
+  if (_sdcard_command(CMD13, 0) || _sdcard_spiTransfer(0xff)) {
     printf("SD_CARD_ERROR_WRITE_PROGRAMMING\n");
     goto fail;
   }
@@ -227,11 +228,11 @@ uint8_t _sdcard_command(uint8_t cmd, uint32_t arg) {
   _sdcard_waitNotBusy(SD_READ_TIMEOUT);
 
   // send command
-  _sdcard_spi_transfer(cmd | 0x40);
+  _sdcard_spiTransfer(cmd | 0x40);
 
   // send argument
   for (int8_t s = 24; s >= 0; s -= 8) {
-    _sdcard_spi_transfer(arg >> s);
+    _sdcard_spiTransfer(arg >> s);
   }
 
   // send CRC
@@ -242,10 +243,10 @@ uint8_t _sdcard_command(uint8_t cmd, uint32_t arg) {
   if (cmd == CMD8) {
     crc = 0X87; // correct crc for CMD8 with arg 0X1AA
   }
-  _sdcard_spi_transfer(crc);
+  _sdcard_spiTransfer(crc);
 
   // wait for response
-  for (uint8_t i = 0; ((status = _sdcard_spi_transfer(0xff)) & 0X80) && i != 0XFF; i++);
+  for (uint8_t i = 0; ((status = _sdcard_spiTransfer(0xff)) & 0X80) && i != 0XFF; i++);
   return status;
 }
 
@@ -254,18 +255,14 @@ uint8_t _sdcard_acommand(uint8_t acmd, uint32_t arg) {
   return _sdcard_command(acmd, arg);
 }
 
-uint8_t _sdcard_spi_transfer(uint8_t d) {
-  SPI_I2S_SendData(SDCARD_SPI, d);
-  while (SPI_I2S_GetFlagStatus(SDCARD_SPI, SPI_I2S_FLAG_TXE) == RESET);
-  while (SPI_I2S_GetFlagStatus(SDCARD_SPI, SPI_I2S_FLAG_RXNE) == RESET);
-  while (SPI_I2S_GetFlagStatus(SDCARD_SPI, SPI_I2S_FLAG_BSY) == SET);
-  return SPI_I2S_ReceiveData(SDCARD_SPI);
+uint8_t _sdcard_spiTransfer(uint8_t d) {
+  return spi_transfer(SDCARD_SPI, d);
 }
 
 uint8_t _sdcard_waitStartBlock() {
   uint8_t status;
   uint16_t t0 = time_ms();
-  while ((status = _sdcard_spi_transfer(0xff)) == 0XFF) {
+  while ((status = _sdcard_spiTransfer(0xff)) == 0XFF) {
     if (((uint16_t)time_ms() - t0) > SD_READ_TIMEOUT) {
       printf("SD_CARD_ERROR_READ_TIMEOUT\n");
       goto fail;
@@ -285,7 +282,7 @@ fail:
 uint8_t _sdcard_waitNotBusy(uint16_t timeoutMillis) {
   uint16_t t0 = time_ms();
   do {
-    if (_sdcard_spi_transfer(0xff) == 0XFF) {
+    if (_sdcard_spiTransfer(0xff) == 0XFF) {
       return TRUE;
     }
   } while (((uint16_t)time_ms() - t0) < timeoutMillis);

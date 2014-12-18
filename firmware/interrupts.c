@@ -1,8 +1,10 @@
 #include <stm32f10x_exti.h>
+#include <stm32f10x_gpio.h>
 #include <stdio.h>
 #include "platform_config.h"
 #include "stm32lib/debug.h"
 #include "stm32lib/time.h"
+#include "stm32lib/cc3000.h"
 
 static void HardFault_Handler(void) __attribute__((naked));
 void prvGetRegistersFromStack(uint32_t* pulFaultStackAddress);
@@ -80,3 +82,13 @@ void prvGetRegistersFromStack(uint32_t* pulFaultStackAddress) {
   for (;;);
 }
 
+void EXTI1_IRQHandler() {
+#ifdef CC3000_ENABLE
+  if (EXTI_GetITStatus(CC3000_IRQ_EXTI_LINE) != RESET) {
+    if (GPIO_ReadInputDataBit(CC3000_IRQ, CC3000_IRQ_PIN) == Bit_RESET) {
+      _cc3000_irq();
+    }
+    EXTI_ClearITPendingBit(CC3000_IRQ_EXTI_LINE);
+  }
+#endif
+}

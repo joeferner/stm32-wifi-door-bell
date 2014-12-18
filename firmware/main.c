@@ -14,6 +14,7 @@
 #include "stm32lib/spi.h"
 #include "stm32lib/sdcard.h"
 #include "stm32lib/sdcard-fat.h"
+#include "stm32lib/cc3000.h"
 
 void setup();
 void loop();
@@ -36,6 +37,7 @@ void setup() {
   //rtc_setup();
   spi_setup();
   sdcard_setupGpio();
+  cc3000_setupGpio();
 
   if (!sdcard_setup()) {
     printf("Failed to setup SDCard\n");
@@ -45,18 +47,30 @@ void setup() {
     }
   }
 
-  SdcardFatFile f;
-  if (!sdcard_fat_file_open(&f, "test.txt", O_RDONLY)) {
+  char buffer[100];
+  FILE* pFile = fopen("/mnt/sdcard/test.txt", "r");
+  if (pFile == NULL) {
     printf("Failed to open test.txt\n");
+    return;
   } else {
-    char buffer[100];
-    printf("opened test.txt (size %lu)\n", sdcard_fat_file_available(&f));
-    if (sdcard_fat_file_read(&f, (uint8_t*)buffer, sizeof(buffer)) >= 0) {
-      printf("FILE: %s\n", buffer);
-    } else {
-      printf("Read failed\n");
+    printf("opened test.txt\n");
+    while (fgets(buffer, sizeof(buffer), pFile) != NULL) {
+      puts(buffer);
     }
-    sdcard_fat_file_close(&f);
+    fclose(pFile);
+    printf("closed test.txt\n");
+  }
+
+  if (!cc3000_setup(0, FALSE, MDNS_DEVICE_NAME)) {
+    printf("failed cc3000 setup\n");
+  }
+
+#define WLAN_SSID       "WifiMonkey"
+#define WLAN_PASS       "Ferner7037727884"
+#define WLAN_SECURITY   WLAN_SEC_WPA2
+
+  if (!cc3000_connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
+    printf("failed cc3000 connect to ap\n");
   }
 }
 

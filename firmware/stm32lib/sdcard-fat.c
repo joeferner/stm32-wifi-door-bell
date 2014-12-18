@@ -85,9 +85,10 @@ BOOL _sdcard_fat_file_getParentDir(SdcardFatFile* f, const char* filePath, int* 
 BOOL _sdcard_fat_file_openFile(SdcardFatFile* f, SdcardFatFile* parentDir, const char* fileName, int mode);
 dir_t* _sdcard_fat_file_readDirCache(SdcardFatFile* f);
 dir_t* _sdcard_fat_file_cacheDirEntry(SdcardFatFile* f, uint8_t action);
-uint8_t _sdcard_fat_file_addDirCluster(SdcardFatFile* f);
+BOOL _sdcard_fat_file_addDirCluster(SdcardFatFile* f);
 BOOL _sdcard_fat_file_truncate(SdcardFatFile* f, uint32_t length);
 BOOL _sdcard_fat_file_sync(SdcardFatFile* f);
+BOOL _sdcard_fat_file_addCluster(SdcardFatFile* f);
 
 BOOL sdcard_fat_setup() {
   printf("BEGIN SDCard Fat Setup\n");
@@ -431,6 +432,131 @@ BOOL _sdcard_fat_cacheRawBlock(uint32_t blockNumber, uint8_t action) {
   return TRUE;
 }
 
+//------------------------------------------------------------------------------
+/**
+ * Write data to an open file.
+ *
+ * \note Data is moved to the cache but may not be written to the
+ * storage device until sync() is called.
+ *
+ * \param[in] buf Pointer to the location of the data to be written.
+ *
+ * \param[in] nbyte Number of bytes to write.
+ *
+ * \return For success write() returns the number of bytes written, always
+ * \a nbyte.  If an error occurs, write() returns -1.  Possible errors
+ * include write() is called before a file has been opened, write is called
+ * for a read-only file, device is full, a corrupt file system or an I/O error.
+ *
+ */
+int16_t sdcard_fat_file_write(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte) {
+  // number of bytes left to write  -  must be before goto statements
+  uint16_t nToWrite = nbyte;
+
+  // error if not a normal file or is read-only
+  if (!IS_FILE(f) || !(f->flags & O_WRITE)) {
+    goto writeErrorReturn;
+  }
+
+  // seek to end of file if append flag
+  if ((f->flags & O_APPEND) && f->currentPosition != f->fileSize) {
+    if (!sdcard_fat_file_seek(f, f->fileSize)) {
+      goto writeErrorReturn;
+    }
+  }
+
+  while (nToWrite > 0) {
+    uint8_t blockOfCluster = _sdcard_fat_blockOfCluster(f->currentPosition);
+    uint16_t blockOffset = f->currentPosition & 0X1FF;
+    if (blockOfCluster == 0 && blockOffset == 0) {
+      // start of new cluster
+      if (f->currentCluster == 0) {
+        if (f->firstCluster == 0) {
+          // allocate first cluster of file
+          if (!_sdcard_fat_file_addCluster(f)) {
+            goto writeErrorReturn;
+          }
+        } else {
+          f->currentCluster = f->firstCluster;
+        }
+      } else {
+        uint32_t next;
+        if (!_sdcard_fat_get(f->currentCluster, &next)) {
+          goto writeErrorReturn;
+        }
+        if (_sdcard_fat_isEOC(next)) {
+          // add cluster if at end of chain
+          if (!_sdcard_fat_file_addCluster(f)) {
+            goto writeErrorReturn;
+          }
+        } else {
+          f->currentCluster = next;
+        }
+      }
+    }
+    // max space in block
+    uint16_t n = 512 - blockOffset;
+
+    // lesser of space and amount to write
+    if (n > nToWrite) {
+      n = nToWrite;
+    }
+
+    // block for data write
+    uint32_t block = _sdcard_fat_clusterStartBlock(f->currentCluster) + blockOfCluster;
+    if (n == 512) {
+      // full block - don't need to use cache
+      // invalidate cache if block is in cache
+      if (_sdcard_fat_cacheBlockNumber == block) {
+        _sdcard_fat_cacheBlockNumber = 0XFFFFFFFF;
+      }
+      if (!sdcard_writeBlock(block, buf)) {
+        goto writeErrorReturn;
+      }
+      buf += 512;
+    } else {
+      if (blockOffset == 0 && f->currentPosition >= f->fileSize) {
+        // start of new block don't need to read into cache
+        if (!_sdcard_fat_cacheFlush()) {
+          goto writeErrorReturn;
+        }
+        _sdcard_fat_cacheBlockNumber = block;
+        _sdcard_fat_cacheDirty |= CACHE_FOR_WRITE;
+      } else {
+        // rewrite part of block
+        if (!_sdcard_fat_cacheRawBlock(block, CACHE_FOR_WRITE)) {
+          goto writeErrorReturn;
+        }
+      }
+      uint8_t* dst = _sdcard_fat_cache.data + blockOffset;
+      uint8_t* end = dst + n;
+      while (dst != end) {
+        *dst++ = *buf++;
+      }
+    }
+    nToWrite -= n;
+    f->currentPosition += n;
+  }
+  if (f->currentPosition > f->fileSize) {
+    // update fileSize and insure sync will update dir entry
+    f->fileSize = f->currentPosition;
+    f->flags |= F_FILE_DIR_DIRTY;
+  } else if (nbyte) {
+    // insure sync will update modified date and time
+    f->flags |= F_FILE_DIR_DIRTY;
+  }
+
+  if (f->flags & O_SYNC) {
+    if (!_sdcard_fat_file_sync(f)) {
+      goto writeErrorReturn;
+    }
+  }
+  return nbyte;
+
+writeErrorReturn:
+  return 0;
+}
+
 int16_t sdcard_fat_file_read(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte) {
   // error if not open or write only
   if (IS_CLOSED(f)) {
@@ -615,7 +741,7 @@ BOOL _sdcard_fat_allocContiguous(uint32_t count, uint32_t* curCluster) {
 
 //------------------------------------------------------------------------------
 // add a cluster to a file
-uint8_t _sdcard_fat_addCluster(SdcardFatFile* f) {
+BOOL _sdcard_fat_file_addCluster(SdcardFatFile* f) {
   if (!_sdcard_fat_allocContiguous(1, &f->currentCluster)) {
     return FALSE;
   }
@@ -761,8 +887,8 @@ BOOL _sdcard_fat_cacheZeroBlock(uint32_t blockNumber) {
 //------------------------------------------------------------------------------
 // Add a cluster to a directory file and zero the cluster.
 // return with first block of cluster in the cache
-uint8_t _sdcard_fat_file_addDirCluster(SdcardFatFile* f) {
-  if (!_sdcard_fat_addCluster(f)) {
+BOOL _sdcard_fat_file_addDirCluster(SdcardFatFile* f) {
+  if (!_sdcard_fat_file_addCluster(f)) {
     return FALSE;
   }
 
@@ -983,6 +1109,7 @@ BOOL sdcard_fat_file_open(SdcardFatFile* f, const char* filePath, int mode) {
 
 void sdcard_fat_file_close(SdcardFatFile* f) {
   _sdcard_fat_cacheFlush();
+  memset(f, 0, sizeof(SdcardFatFile));
 }
 
 BOOL _sdcard_fat_openRoot() {
@@ -1042,6 +1169,7 @@ BOOL _sdcard_fat_cacheRead(uint32_t blockNumber, int action) {
   _sdcard_fat_cacheDirty |= action;
   return TRUE;
 }
+
 
 
 

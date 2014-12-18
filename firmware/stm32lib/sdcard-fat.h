@@ -3,11 +3,16 @@
 #define _SDCARD_FAT_H_
 
 #include "platform_config.h"
+#include "util.h"
 
 #ifdef SDCARD_ENABLE
 
 #include <stdint.h>
 //#include <fcntl.h>
+
+#ifndef SDCARD_PATH_PREFIX
+# define SDCARD_PATH_PREFIX "/mnt/sdcard/"
+#endif
 
 #ifndef O_ACCMODE
 # define O_ACCMODE     0003
@@ -112,6 +117,7 @@ uint32_t sdcard_fat_file_size(SdcardFatFile* f);
 uint32_t sdcard_fat_file_position(SdcardFatFile* f);
 int16_t sdcard_fat_file_readByte(SdcardFatFile* f);
 int16_t sdcard_fat_file_read(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte);
+int16_t sdcard_fat_file_write(SdcardFatFile* f, uint8_t* buf, uint16_t nbyte);
 
 #endif
 #endif
