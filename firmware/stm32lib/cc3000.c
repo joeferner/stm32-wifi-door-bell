@@ -295,6 +295,51 @@ BOOL cc3000_connectToAP(const char* ssid, const char* key, uint8_t secmode) {
   return TRUE;
 }
 
+BOOL cc3000_checkDHCP() {
+  // Ugly hack to fix UDP issues with the 1.13 firmware by calling
+  // gethostbyname on localhost.  The output is completely ignored
+  // but for some reason this call is necessary or else UDP won't
+  // work.  See this thread from TI for more details and the genesis
+  // of the workaround: http://e2e.ti.com/support/wireless_connectivity/f/851/t/342177.aspx
+  // Putting this in checkDHCP is a nice way to make it just work
+  // for people without any need to add to their sketch.
+  if (_cc3000_status.hasDHCP) {
+    uint32_t output;
+    gethostbyname("localhost", 9, &output);
+  }
+  return _cc3000_status.hasDHCP;
+}
+
+BOOL cc3000_getIPAddress(uint32_t* retip, uint32_t* netmask, uint32_t* gateway, uint32_t* dhcpserv, uint32_t* dnsserv) {
+  if (!_cc3000_status.isConnected) {
+    return FALSE;
+  }
+  if (!_cc3000_status.hasDHCP) {
+    return FALSE;
+  }
+
+  tNetappIpconfigRetArgs ipconfig;
+  netapp_ipconfig(&ipconfig);
+
+  /* If byte 1 is 0 we don't have a valid address */
+  if (ipconfig.aucIP[3] == 0) {
+    return FALSE;
+  }
+
+  memcpy(retip, ipconfig.aucIP, 4);
+  memcpy(netmask, ipconfig.aucSubnetMask, 4);
+  memcpy(gateway, ipconfig.aucDefaultGateway, 4);
+  memcpy(dhcpserv, ipconfig.aucDHCPServer, 4);
+  memcpy(dnsserv, ipconfig.aucDNSServer, 4);
+
+  return TRUE;
+}
+
+char* cc3000_ipToString(uint32_t ip, char* buffer) {
+  sprintf(buffer, "%d.%d.%d.%d", (uint8_t)(ip >> 24), (uint8_t)(ip >> 16), (uint8_t)(ip >> 8), (uint8_t)(ip >> 0));
+  return buffer;
+}
+
 BOOL _cc3000_scanSSIDs(uint32_t time) {
   const unsigned long intervalTime[16] = { 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000 };
 

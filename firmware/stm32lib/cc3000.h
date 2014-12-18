@@ -27,6 +27,10 @@ extern uint8_t wlan_tx_buffer[CC3000_TX_BUFFER_SIZE];
 void cc3000_setupGpio();
 BOOL cc3000_setup(uint8_t patchReq, BOOL useSmartConfigData, const char *deviceName);
 BOOL cc3000_connectToAP(const char *ssid, const char *key, uint8_t secmode);
+BOOL cc3000_checkDHCP();
+BOOL cc3000_getIPAddress(uint32_t *retip, uint32_t *netmask, uint32_t *gateway, uint32_t *dhcpserv, uint32_t *dnsserv);
+char* cc3000_ipToString(uint32_t ip, char* buffer);
+
 void _cc3000_irq();
 
 // used by CC3000 host driver

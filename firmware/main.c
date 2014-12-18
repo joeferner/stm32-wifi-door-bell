@@ -19,6 +19,7 @@
 
 void setup();
 void loop();
+BOOL displayConnectionInfo();
 
 int main(void) {
   setup();
@@ -76,11 +77,35 @@ void setup() {
   } else {
     printf("failed cc3000 connect to ap\n");
   }
+
+  printf("Request DHCP\n");
+  while (!cc3000_checkDHCP()) {
+    delay_ms(100);
+  }
+
+  displayConnectionInfo();
 }
 
 void loop() {
   printf("loop\n");
   delay_ms(5000);
+}
+
+BOOL displayConnectionInfo() {
+  char buffer[20];
+  uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
+
+  if (!cc3000_getIPAddress(&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
+    printf("Unable to retrieve the IP Address!\n");
+    return FALSE;
+  } else {
+    printf("IP Addr: %s\n", cc3000_ipToString(ipAddress, buffer));
+    printf("Netmask: %s\n", cc3000_ipToString(netmask, buffer));
+    printf("Gateway: %s\n", cc3000_ipToString(gateway, buffer));
+    printf("DHCPsrv: %s\n", cc3000_ipToString(dhcpserv, buffer));
+    printf("DNSserv: %s\n", cc3000_ipToString(dnsserv, buffer));
+    return TRUE;
+  }
 }
 
 void sdcard_fat_getTime(SdcardFatFile* f, uint16_t* creationDate, uint16_t* creationTime) {

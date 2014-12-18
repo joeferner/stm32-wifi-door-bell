@@ -68,6 +68,7 @@ SET(PROJECT_SOURCES
   stm32lib/cc3000-host-driver/hci.c
   stm32lib/cc3000-host-driver/evnt_handler.c
   stm32lib/cc3000-host-driver/nvmem.c
+  stm32lib/cc3000-host-driver/netapp.c
 )
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME}.elf ${PROJECT_SOURCES} ${CMSIS_STARTUP_SOURCE})
