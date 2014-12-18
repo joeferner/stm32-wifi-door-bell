@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include "platform_config.h"
 #include "rtc.h"
+#include "config.h"
+#include "network.h"
 #include "stm32lib/debug.h"
 #include "stm32lib/delay.h"
 #include "stm32lib/time.h"
@@ -19,7 +21,6 @@
 
 void setup();
 void loop();
-BOOL displayConnectionInfo();
 
 int main(void) {
   setup();
@@ -50,62 +51,19 @@ void setup() {
     }
   }
 
-  char buffer[100];
-  FILE* pFile = fopen("/mnt/sdcard/test.txt", "r");
-  if (pFile == NULL) {
-    printf("Failed to open test.txt\n");
-    return;
+  if (config_read()) {
+    printf("read config success\n");
   } else {
-    printf("opened test.txt\n");
-    while (fgets(buffer, sizeof(buffer), pFile) != NULL) {
-      puts(buffer);
-    }
-    fclose(pFile);
-    printf("closed test.txt\n");
+    printf("read config FAILED\n");
+    while (1);
   }
 
-  if (!cc3000_setup(0, FALSE, MDNS_DEVICE_NAME)) {
-    printf("failed cc3000 setup\n");
-  }
-
-#define WLAN_SSID       "WifiMonkey"
-#define WLAN_PASS       "Ferner7037727884"
-#define WLAN_SECURITY   WLAN_SEC_WPA2
-
-  if (cc3000_connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
-    printf("Connected\n");
-  } else {
-    printf("failed cc3000 connect to ap\n");
-  }
-
-  printf("Request DHCP\n");
-  while (!cc3000_checkDHCP()) {
-    delay_ms(100);
-  }
-
-  displayConnectionInfo();
+  network_setup();
 }
 
 void loop() {
   printf("loop\n");
   delay_ms(5000);
-}
-
-BOOL displayConnectionInfo() {
-  char buffer[20];
-  uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
-
-  if (!cc3000_getIPAddress(&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
-    printf("Unable to retrieve the IP Address!\n");
-    return FALSE;
-  } else {
-    printf("IP Addr: %s\n", cc3000_ipToString(ipAddress, buffer));
-    printf("Netmask: %s\n", cc3000_ipToString(netmask, buffer));
-    printf("Gateway: %s\n", cc3000_ipToString(gateway, buffer));
-    printf("DHCPsrv: %s\n", cc3000_ipToString(dhcpserv, buffer));
-    printf("DNSserv: %s\n", cc3000_ipToString(dnsserv, buffer));
-    return TRUE;
-  }
 }
 
 void sdcard_fat_getTime(SdcardFatFile* f, uint16_t* creationDate, uint16_t* creationTime) {

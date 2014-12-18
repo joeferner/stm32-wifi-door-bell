@@ -263,7 +263,7 @@ BOOL cc3000_connectToAP(const char* ssid, const char* key, uint8_t secmode) {
     _cc3000_scanSSIDs(0);
 
     /* Attempt to connect to an access point */
-    printf("Connecting to %s\n", ssid);
+    printf("Connecting to '%s' (key: '%s', security: '%d')\n", ssid, key, secmode);
     if ((secmode == 0) || (strlen(key) == 0)) {
       /* Connect to an unsecured network */
       if (!_cc3000_connectOpen(ssid)) {

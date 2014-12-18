@@ -54,10 +54,13 @@ SET(PROJECT_SOURCES
   main.c
   interrupts.c
   rtc.c
+  config.c
+  network.c
   stm32lib/spi.c
   stm32lib/delay.c
   stm32lib/time.c
   stm32lib/debug.c
+  stm32lib/util.c
   stm32lib/newlib.c
   stm32lib/sdcard.c
   stm32lib/sdcard-fat.c

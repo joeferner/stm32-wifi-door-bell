@@ -31,9 +31,11 @@ extern "C" {
 # define CLAMP(v, min, max) ( ((v) < (min)) ? (min) : ( ((v) > (max)) ? (max) : (v) ) )
 #endif
 
-uint32_t swap_endian(uint32_t val);
-void trim_right(char* str);
-int is_whitespace(char ch);
+uint32_t swapEndian(uint32_t val);
+void strTrim(char* str);
+void strTrimLeft(char* str);
+void strTrimRight(char* str);
+int isWhitespace(char ch);
 
 #ifdef	__cplusplus
 }
