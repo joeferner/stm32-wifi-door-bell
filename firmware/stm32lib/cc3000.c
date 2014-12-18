@@ -335,6 +335,10 @@ BOOL cc3000_getIPAddress(uint32_t* retip, uint32_t* netmask, uint32_t* gateway, 
   return TRUE;
 }
 
+BOOL cc3000_getMacAddress(uint8_t* macAddress) {
+  return nvmem_read(NVMEM_MAC_FILEID, 6, 0, macAddress) == CC3000_SUCCESS;
+}
+
 char* cc3000_ipToString(uint32_t ip, char* buffer) {
   sprintf(buffer, "%d.%d.%d.%d", (uint8_t)(ip >> 24), (uint8_t)(ip >> 16), (uint8_t)(ip >> 8), (uint8_t)(ip >> 0));
   return buffer;

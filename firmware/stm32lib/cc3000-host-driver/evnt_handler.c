@@ -224,7 +224,7 @@ void hci_unsol_handle_patch_request(CHAR *event_hdr)
 //!                  event handler from global array of handlers pointers
 //
 //*****************************************************************************
-
+extern void _cc3000_irqPoll();
 
 UINT8 * hci_event_handler(void *pRetParams, UINT8 *from, UINT8 *fromlen)
 {
@@ -485,6 +485,7 @@ UINT8 * hci_event_handler(void *pRetParams, UINT8 *from, UINT8 *fromlen)
 				return NULL;
 			}	
 		}
+		_cc3000_irqPoll();
 	}
 
 }
