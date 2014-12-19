@@ -61,9 +61,16 @@ typedef struct {
   uint8_t* rxPacket;
 } _CC3000SpiInformation;
 
+typedef struct {
+  BOOL closed;
+  uint8_t rxBuffer[CC3000_RX_BUFFER_SIZE];
+  uint8_t rxBufferIndex;
+  int16_t bufferSize;
+} _CC3000Socket;
+
 _CC3000Status _cc3000_status;
 _CC3000SpiInformation _cc3000_spiInformation;
-BOOL _cc3000_closedSockets[MAX_SOCKETS];
+_CC3000Socket _cc3000_sockets[MAX_SOCKETS];
 uint8_t _cc3000_pingReportNum;
 netapp_pingreport_args_t _cc3000_pingReport;
 BOOL _cc3000_irqEnabled;
@@ -141,7 +148,7 @@ BOOL cc3000_setup(uint8_t patchReq, BOOL useSmartConfigData, const char* deviceN
   memset(&_cc3000_status, 0, sizeof(_cc3000_status));
   memset(&_cc3000_pingReport, 0, sizeof(_cc3000_pingReport));
   for (int i = 0; i < MAX_SOCKETS; i++) {
-    _cc3000_closedSockets[i] = FALSE;
+    _cc3000_sockets[i].closed = FALSE;
   }
   _cc3000_inIrq = FALSE;
 
@@ -215,6 +222,91 @@ BOOL cc3000_setup(uint8_t patchReq, BOOL useSmartConfigData, const char* deviceN
   printf("END CC3000 Setup\n");
   return TRUE;
 }
+
+SOCKET cc3000_connectUDP(uint32_t destIP, uint16_t destPort) {
+  sockaddr socketAddress;
+  SOCKET sock;
+
+  sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (-1 == sock) {
+    return -1;
+  }
+
+  memset(&socketAddress, 0x00, sizeof(socketAddress));
+  socketAddress.sa_family = AF_INET;
+  socketAddress.sa_data[0] = (destPort & 0xFF00) >> 8;  // Set the Port Number
+  socketAddress.sa_data[1] = (destPort & 0x00FF);
+  socketAddress.sa_data[2] = destIP >> 24;
+  socketAddress.sa_data[3] = destIP >> 16;
+  socketAddress.sa_data[4] = destIP >> 8;
+  socketAddress.sa_data[5] = destIP;
+
+  if (-1 == connect(sock, &socketAddress, sizeof(socketAddress))) {
+    closesocket(sock);
+    return -1;
+  }
+
+  return sock;
+}
+
+BOOL cc3000_socket_connected(SOCKET sock) {
+  if (sock < 0) {
+    return FALSE;
+  }
+
+  if (!cc3000_socket_available(sock) && _cc3000_sockets[sock].closed == TRUE) {
+    //if (CC3KPrinter != 0) CC3KPrinter->println("No more data, and closed!");
+    closesocket(sock);
+    _cc3000_sockets[sock].closed = FALSE;
+    sock = -1;
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+int cc3000_socket_available(SOCKET sockIndex) {
+  // not open!
+  if (sockIndex < 0) {
+    return 0;
+  }
+
+  _CC3000Socket* sock = &_cc3000_sockets[sockIndex];
+
+  if ((sock->bufferSize > 0) // we have some data in the internal buffer
+      && (sock->rxBufferIndex < sock->bufferSize)) {  // we havent already spit it all out
+    return (sock->bufferSize - sock->rxBufferIndex);
+  }
+
+  // do a select() call on this socket
+  timeval timeout;
+  fd_set fd_read;
+
+  memset(&fd_read, 0, sizeof(fd_read));
+  FD_SET(sockIndex, &fd_read);
+
+  timeout.tv_sec = 0;
+  timeout.tv_usec = 5000; // 5 millisec
+
+  int16_t s = select(sockIndex + 1, &fd_read, NULL, NULL, &timeout);
+  if (s == 1) {
+    return 1; // some data is available to read
+  }
+  return 0; // no data is available
+}
+
+int cc3000_socket_write(SOCKET sock, const void* buf, uint16_t len, uint32_t flags) {
+  return send(sock, buf, len, flags);
+}
+
+int cc3000_socket_read(SOCKET sock, void* buf, uint16_t len, uint32_t flags) {
+  return recv(sock, buf, len, flags);
+}
+
+BOOL cc3000_socket_close(SOCKET sock) {
+  return closesocket(sock);
+}
+
 
 void _cc3000_cs_assert() {
   GPIO_ResetBits(CC3000_CS, CC3000_CS_PIN);
@@ -423,7 +515,7 @@ void _cc3000_asyncCallback(long lEventType, char* data, unsigned char length) {
     uint8_t socketnum;
     socketnum = data[0];
     if (socketnum < MAX_SOCKETS) {
-      _cc3000_closedSockets[socketnum] = TRUE;
+      _cc3000_sockets[socketnum].closed = TRUE;
     }
   }
 }

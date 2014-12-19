@@ -1,5 +1,6 @@
 
 #include "rtc.h"
+#include <stdio.h>
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_rtc.h>
 #include <stm32f10x_pwr.h>
@@ -23,4 +24,17 @@ void rtc_setup() {
   // set RTC period to 1sec
   RTC_SetPrescaler(32767); // RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1)
   RTC_WaitForLastTask();
+}
+
+void rtc_setTime(uint32_t time) {
+  printf("BEGIN rtc_setTime %lu\n", time);
+  PWR_BackupAccessCmd(ENABLE);
+  RTC_WaitForLastTask();
+  RTC_SetCounter(time);
+  RTC_WaitForLastTask();
+  printf("END rtc_setTime %lu\n", time);
+}
+
+uint32_t rtc_getSeconds() {
+  return RTC_GetCounter();
 }

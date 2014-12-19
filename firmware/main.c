@@ -18,9 +18,12 @@
 #include "stm32lib/sdcard.h"
 #include "stm32lib/sdcard-fat.h"
 #include "stm32lib/cc3000.h"
+#include "stm32lib/ntp.h"
 
 void setup();
 void loop();
+uint16_t rtcToFatTime(uint32_t t);
+uint16_t rtcToFatDate(uint32_t t);
 
 int main(void) {
   setup();
@@ -38,7 +41,7 @@ void setup() {
   time_setup();
 
   debug_setup();
-  //rtc_setup();
+  rtc_setup();
   spi_setup();
   sdcard_setupGpio();
   cc3000_setupGpio();
@@ -59,17 +62,32 @@ void setup() {
   }
 
   network_setup();
+
+  uint32_t ntpTime = ntp_getTime();
+  printf("ntp time %lu\n", ntpTime);
+  if (ntpTime > 0) {
+    rtc_setTime(ntpTime);
+  }
 }
 
 void loop() {
-  printf("loop\n");
+  printf("loop %lu\n", rtc_getSeconds());
   delay_ms(5000);
 }
 
 void sdcard_fat_getTime(SdcardFatFile* f, uint16_t* creationDate, uint16_t* creationTime) {
-  uint32_t rtc = RTC_GetCounter();
-  *creationDate = rtc / (24 * 60 * 60);
-  *creationTime = FAT_DEFAULT_TIME;
+  uint32_t rtc = rtc_getSeconds();
+  *creationDate = rtcToFatDate(rtc);
+  *creationTime = rtcToFatTime(rtc);
+}
+
+uint16_t rtcToFatTime(uint32_t t) {
+  return (t % (24 * 60 * 60)) / 2;
+}
+
+uint16_t rtcToFatDate(uint32_t t) {
+  static uint16_t DATE_FROM_1970_TO_1980 = 1387; // RTC is since 1970, FAT is since 1980.
+  return (t / (24 * 60 * 60)) + DATE_FROM_1970_TO_1980;
 }
 
 void assert_failed(uint8_t* file, uint32_t line) {
