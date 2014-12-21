@@ -4,22 +4,46 @@
 #include <stdio.h>
 #include "stm32lib/cc3000.h"
 #include "stm32lib/delay.h"
+#include "stm32lib/crc32.h"
 #include "config.h"
+
+#define NETWORK_CONFIG_CHANGE_FILEPATH "/mnt/sdcard/network.sys"
 
 BOOL _network_displayConnectionInfo();
 BOOL _network_displayMAC();
+BOOL _network_hasConfigChanged();
+void _network_writeConfigChangeFile();
 
 BOOL network_setup() {
-  if (!cc3000_setup(0, FALSE, MDNS_DEVICE_NAME)) {
+  if (!cc3000_setup(FALSE, CC3000_CONNECT_POLICY_OPEN_AP | CC3000_CONNECT_POLICY_FAST | CC3000_CONNECT_POLICY_PROFILES, MDNS_DEVICE_NAME)) {
     printf("failed cc3000 setup\n");
     return FALSE;
   }
 
-  if (cc3000_connectToAP(config.wifi.ssid, config.wifi.password, config.wifi.security)) {
-    printf("Connected\n");
-  } else {
-    printf("failed cc3000 connect to ap\n");
-    return FALSE;
+  if (_network_hasConfigChanged()) {
+    printf("network config has changed. writing new profiles to cc3000\n");
+
+    if (cc3000_addProfile(config.wifi.ssid, config.wifi.password, config.wifi.security)) {
+      printf("add profile complete\n");
+    } else {
+      printf("failed to add profile\n");
+      cc3000_deleteAllProfiles();
+      if (cc3000_addProfile(config.wifi.ssid, config.wifi.password, config.wifi.security)) {
+        printf("add profile complete\n");
+      } else {
+        printf("failed to add profile\n");
+        return FALSE;
+      }
+    }
+
+    if (cc3000_finishAddProfileAndConnect()) {
+      printf("connect with profile complete\n");
+    } else {
+      printf("failed to connect with profile\n");
+      return FALSE;
+    }
+
+    _network_writeConfigChangeFile();
   }
 
   printf("Request DHCP\n");
@@ -70,4 +94,38 @@ BOOL _network_displayMAC() {
     macAddress[5]
   );
   return TRUE;
+}
+
+BOOL _network_hasConfigChanged() {
+  uint32_t fileCrc;
+  FILE* f = fopen(NETWORK_CONFIG_CHANGE_FILEPATH, "r");
+  if (f == NULL) {
+    printf("network config could not open crc\n");
+    return TRUE;
+  }
+  if (fread((uint8_t*)&fileCrc, 1, sizeof(fileCrc), f) < 4) {
+    printf("network config could not read crc\n");
+    fclose(f);
+    return TRUE;
+  }
+  fclose(f);
+
+  uint32_t crc = crc32(0, (uint8_t*)&config.wifi, sizeof(config.wifi));
+  printf("network config %lx ?= %lx\n", crc, fileCrc);
+  return (crc != fileCrc);
+}
+
+void _network_writeConfigChangeFile() {
+  FILE* f = fopen(NETWORK_CONFIG_CHANGE_FILEPATH, "w");
+  if (f == NULL) {
+    printf("network could not write config change file\n");
+    return;
+  }
+
+  uint32_t crc = crc32(0, (uint8_t*)&config.wifi, sizeof(config.wifi));
+  fwrite((uint8_t*)&crc, 1, sizeof(crc), f);
+
+  fclose(f);
+
+  printf("network config wrote %lx\n", crc);
 }

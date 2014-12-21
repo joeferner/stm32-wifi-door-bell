@@ -23,6 +23,11 @@
 # define CC3000_RX_BUFFER_SIZE 64
 #endif
 
+#define CC3000_CONNECT_POLICY_OPEN_AP       0x01
+#define CC3000_CONNECT_POLICY_FAST          0x02
+#define CC3000_CONNECT_POLICY_PROFILES      0x04
+#define CC3000_CONNECT_POLICY_SMART_CONFIG  0x10
+
 typedef int32_t SOCKET;
 
 typedef void (*_cc3000_spiHandleRx)(void* p);
@@ -31,8 +36,11 @@ typedef void (*_cc3000_spiHandleTx)();
 extern uint8_t wlan_tx_buffer[CC3000_TX_BUFFER_SIZE];
 
 void cc3000_setupGpio();
-BOOL cc3000_setup(uint8_t patchReq, BOOL useSmartConfigData, const char* deviceName);
+BOOL cc3000_setup(BOOL patchReq, uint8_t connectPolicy, const char* deviceName);
 BOOL cc3000_connectToAP(const char* ssid, const char* key, uint8_t secmode);
+BOOL cc3000_addProfile(const char* ssid, const char* key, uint8_t secmode);
+BOOL cc3000_deleteAllProfiles();
+BOOL cc3000_finishAddProfileAndConnect();
 BOOL cc3000_checkDHCP();
 BOOL cc3000_getIPAddress(uint32_t* retip, uint32_t* netmask, uint32_t* gateway, uint32_t* dhcpserv, uint32_t* dnsserv);
 BOOL cc3000_getMacAddress(uint8_t* macAddress);

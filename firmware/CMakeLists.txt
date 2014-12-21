@@ -65,6 +65,7 @@ SET(PROJECT_SOURCES
   stm32lib/util.c
   stm32lib/ntp.c
   stm32lib/newlib.c
+  stm32lib/crc32.c
   stm32lib/sdcard.c
   stm32lib/sdcard-fat.c
   stm32lib/cc3000.c

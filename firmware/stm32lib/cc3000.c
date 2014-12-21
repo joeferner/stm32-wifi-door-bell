@@ -140,8 +140,8 @@ void cc3000_setupGpio() {
   printf("END CC3000 Setup GPIO\n");
 }
 
-BOOL cc3000_setup(uint8_t patchReq, BOOL useSmartConfigData, const char* deviceName) {
-  printf("BEGIN CC3000 Setup (patchReq: %d, useSmartConfigData: %s, deviceName: %s)\n", patchReq, useSmartConfigData ? "TRUE" : "FALSE", deviceName);
+BOOL cc3000_setup(BOOL patchReq, uint8_t connectPolicy, const char* deviceName) {
+  printf("BEGIN CC3000 Setup (patchReq: %d, connectPolicy: %d, deviceName: %s)\n", patchReq, connectPolicy, deviceName);
 
   _cc3000_pingReportNum = 0;
   _cc3000_irqEnabled = FALSE;
@@ -175,20 +175,13 @@ BOOL cc3000_setup(uint8_t patchReq, BOOL useSmartConfigData, const char* deviceN
 
   // Check if we should erase previous stored connection details
   // (most likely written with data from the SmartConfig app)
-  if (!useSmartConfigData) {
-    // Manual connection only (no auto, profiles, etc.)
-    wlan_ioctl_set_connection_policy(0, 0, 0);
+  int connectToOpenAPs = (connectPolicy & CC3000_CONNECT_POLICY_OPEN_AP) ? 1 : 0;
+  int useFastConnect = (connectPolicy & CC3000_CONNECT_POLICY_FAST) ? 1 : 0;
+  int useProfiles = (connectPolicy & CC3000_CONNECT_POLICY_PROFILES) ? 1 : 0;
+  wlan_ioctl_set_connection_policy(connectToOpenAPs, useFastConnect, useProfiles);
+  if (connectToOpenAPs == 0 && useFastConnect == 0 && useProfiles == 0) {
     // Delete previous profiles from memory
     wlan_ioctl_del_profile(255);
-  } else {
-    // Auto Connect - the C3000 device tries to connect to any AP it detects during scanning:
-    // wlan_ioctl_set_connection_policy(1, 0, 0)
-
-    // Fast Connect - the CC3000 device tries to reconnect to the last AP connected to:
-    // wlan_ioctl_set_connection_policy(0, 1, 0)
-
-    // Use Profiles - the CC3000 device tries to connect to an AP from profiles:
-    wlan_ioctl_set_connection_policy(0, 0, 1);
   }
 
   if (wlan_set_event_mask(HCI_EVNT_WLAN_UNSOL_INIT        |
@@ -201,7 +194,7 @@ BOOL cc3000_setup(uint8_t patchReq, BOOL useSmartConfigData, const char* deviceN
   }
 
   // Wait for re-connection if we're using SmartConfig data
-  if (useSmartConfigData) {
+  if (connectPolicy & CC3000_CONNECT_POLICY_SMART_CONFIG) {
     // Wait for a connection
     uint32_t timeout = 0;
     while (!_cc3000_status.isConnected) {
@@ -337,6 +330,55 @@ BOOL _cc3000_getFirmwareVersion(uint8_t* major, uint8_t* minor) {
   *major = fwpReturn[0];
   *minor = fwpReturn[1];
 
+  return TRUE;
+}
+
+BOOL cc3000_deleteAllProfiles() {
+  printf("deleting profiles\n");
+  return wlan_ioctl_del_profile(255) == 0;
+}
+
+BOOL cc3000_addProfile(const char* ssid, const char* key, uint8_t secmode) {
+  uint32_t ulPriority = 0;
+
+  // taken from wlan.c WPA smart config example
+  uint32_t ulPairwiseCipher_Or_TxKeyLen = 0x18;
+  uint32_t ulGroupCipher_TxKeyIndex = 0x1e;
+  uint32_t ulKeyMgmt = 0x2;
+
+  int32_t result = wlan_add_profile(secmode, (uint8_t*)ssid, strlen(ssid), NULL, ulPriority, ulPairwiseCipher_Or_TxKeyLen, ulGroupCipher_TxKeyIndex, ulKeyMgmt, (uint8_t*)key, strlen(key));
+  if (result == -1) {
+    printf("failed to add profile %ld\n", result);
+    return FALSE;
+  }
+  return TRUE;
+}
+
+BOOL cc3000_finishAddProfileAndConnect() {
+  int connectToOpenAPs = 1;
+  int useFastConnect = 1;
+  int useProfiles = 1;
+  if (wlan_ioctl_set_connection_policy(connectToOpenAPs, useFastConnect, useProfiles) != CC3000_SUCCESS) {
+    printf("failed to set connection policy\n");
+    return FALSE;
+  }
+
+  wlan_stop();
+  delay_ms(100);
+
+  BOOL patchAvailable = FALSE;
+  wlan_start(patchAvailable);
+
+  int16_t timer = WLAN_CONNECT_TIMEOUT;
+  while (!_cc3000_status.isConnected) {
+    delay_ms(10);
+    timer -= 10;
+    if (timer <= 0) {
+      printf("Timed out!\n");
+      return FALSE;
+    }
+    _cc3000_irqPoll();
+  }
   return TRUE;
 }
 
@@ -693,6 +735,14 @@ void _cc3000_spiOpen(_cc3000_spiHandleRx rxHandler) {
 
   /* Enable interrupt on the GPIO pin of WLAN IRQ */
   tSLInformation.WlanInterruptEnable();
+}
+
+void _cc3000_spiClose() {
+  if (_cc3000_spiInformation.rxPacket) {
+    _cc3000_spiInformation.rxPacket = 0;
+  }
+
+  _cc3000_wlanInterruptDisable();
 }
 
 void _cc3000_spiResume() {

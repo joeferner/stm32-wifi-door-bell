@@ -53,7 +53,7 @@ void setup() {
       printf("Failed to setup SDCard Fat\n");
     }
   }
-
+  
   if (config_read()) {
     printf("read config success\n");
   } else {
