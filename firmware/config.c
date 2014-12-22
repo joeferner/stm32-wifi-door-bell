@@ -22,6 +22,7 @@ BOOL config_read() {
   char* value;
 
   memset(&config, 0, sizeof(config));
+  strcpy(config.general.name, "doorbell01");
   strcpy(config.button0.name, "Front");
   strcpy(config.button1.name, "Back");
   strcpy(config.cloud.baseUrl, "http://zzzzzzzzz"); // TODO fill me in
