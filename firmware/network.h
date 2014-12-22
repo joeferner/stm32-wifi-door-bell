@@ -5,5 +5,6 @@
 #include "stm32lib/util.h"
 
 BOOL network_setup();
+BOOL network_sendButtonEvent(int buttonNumber);
 
 #endif

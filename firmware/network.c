@@ -5,17 +5,23 @@
 #include "stm32lib/cc3000.h"
 #include "stm32lib/delay.h"
 #include "stm32lib/crc32.h"
+#include "stm32lib/time.h"
+#include "stm32lib/cc3000-host-driver/socket.h"
 #include "config.h"
 
 #define NETWORK_CONFIG_CHANGE_FILEPATH "/mnt/sdcard/network.sys"
+#define BROADCAST_CONNECT_TIMEOUT 5000
+
+uint32_t _network_ipAddress;
 
 BOOL _network_displayConnectionInfo();
 BOOL _network_displayMAC();
 BOOL _network_hasConfigChanged();
 void _network_writeConfigChangeFile();
+BOOL _network_sendUdpBroadcast(int buttonNumber);
 
 BOOL network_setup() {
-  if (!cc3000_setup(FALSE, CC3000_CONNECT_POLICY_OPEN_AP | CC3000_CONNECT_POLICY_FAST | CC3000_CONNECT_POLICY_PROFILES, MDNS_DEVICE_NAME)) {
+  if (!cc3000_setup(FALSE, CC3000_CONNECT_POLICY_OPEN_AP | CC3000_CONNECT_POLICY_FAST | CC3000_CONNECT_POLICY_PROFILES, config.general.name)) {
     printf("failed cc3000 setup\n");
     return FALSE;
   }
@@ -61,14 +67,14 @@ BOOL network_setup() {
 
 BOOL _network_displayConnectionInfo() {
   char buffer[20];
-  uint32_t ipAddress, netmask, gateway, dhcpserv, dnsserv;
+  uint32_t netmask, gateway, dhcpserv, dnsserv;
 
-  if (!cc3000_getIPAddress(&ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
+  if (!cc3000_getIPAddress(&_network_ipAddress, &netmask, &gateway, &dhcpserv, &dnsserv)) {
     printf("Unable to retrieve the IP Address!\n");
     return FALSE;
   }
 
-  printf("IP Addr: %s\n", cc3000_ipToString(ipAddress, buffer));
+  printf("IP Addr: %s\n", cc3000_ipToString(_network_ipAddress, buffer));
   printf("Netmask: %s\n", cc3000_ipToString(netmask, buffer));
   printf("Gateway: %s\n", cc3000_ipToString(gateway, buffer));
   printf("DHCPsrv: %s\n", cc3000_ipToString(dhcpserv, buffer));
@@ -128,4 +134,45 @@ void _network_writeConfigChangeFile() {
   fclose(f);
 
   printf("network config wrote %lx\n", crc);
+}
+
+BOOL network_sendButtonEvent(int buttonNumber) {
+  return _network_sendUdpBroadcast(buttonNumber);
+}
+
+BOOL _network_sendUdpBroadcast(int buttonNumber) {
+  char buffer[100];
+  SOCKET sock;
+  sockaddr_in broadcastAddr, bindAddr;
+  uint32_t broadcastIp = _network_ipAddress | 0x000000ff;
+
+  int broadcastPort = 9898;
+  printf("broadcasting to: %s:%d\n", cc3000_ipToString(broadcastIp, buffer), broadcastPort);
+
+  if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    printf("failed to create socket\n");
+    return FALSE;
+  }
+
+  memset(&bindAddr, 0, sizeof(bindAddr));
+  bindAddr.sin_family = AF_INET;
+  bindAddr.sin_addr.s_addr = INADDR_ANY;
+  bindAddr.sin_port = htons(broadcastPort);
+  bind(sock, (const sockaddr*)&bindAddr, sizeof(bindAddr));
+
+  sprintf(buffer, "{source: \"%s\", buttonNumber: %d}", config.general.name, buttonNumber);
+  uint16_t bufferLen = strlen(buffer);
+
+  memset(&broadcastAddr, 0, sizeof(broadcastAddr));
+  broadcastAddr.sin_family = AF_INET;
+  broadcastAddr.sin_addr.s_addr = htonl(broadcastIp);
+  broadcastAddr.sin_port = htons(broadcastPort);
+  if (sendto(sock, buffer, bufferLen, 0, (const sockaddr*)&broadcastAddr, sizeof(broadcastAddr)) != bufferLen) {
+    printf("send udp broadcast, failed write\n");
+    closesocket(sock);
+    return FALSE;
+  }
+
+  closesocket(sock);
+  return TRUE;
 }

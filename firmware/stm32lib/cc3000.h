@@ -9,6 +9,7 @@
 #include "util.h"
 #include "cc3000-host-driver/cc3000_common.h"
 #include "cc3000-host-driver/wlan.h"
+#include "cc3000-host-driver/socket.h"
 #include <string.h>
 
 #ifndef MAX_SOCKETS
@@ -49,11 +50,21 @@ SOCKET cc3000_connectUDP(uint32_t destIP, uint16_t destPort);
 
 BOOL cc3000_socket_connected(SOCKET sock);
 int cc3000_socket_available(SOCKET sock);
-int cc3000_socket_write(SOCKET sock, const void *buf, uint16_t len, uint32_t flags);
-int cc3000_socket_read(SOCKET sock, void *buf, uint16_t len, uint32_t flags);
+int cc3000_socket_write(SOCKET sock, const void* buf, uint16_t len, uint32_t flags);
+int cc3000_socket_read(SOCKET sock, void* buf, uint16_t len, uint32_t flags);
 BOOL cc3000_socket_close(SOCKET sock);
 
 void _cc3000_irq();
+
+#ifndef INADDR_NONE
+# define INADDR_NONE ((uint32_t) 0xffffffff)
+#endif
+#ifndef INADDR_ANY
+# define INADDR_ANY ((uint32_t) 0x00000000)
+#endif
+
+uint32_t inet_addr(const char* cp);
+int inet_aton(const char* cp, in_addr* addr);
 
 // used by CC3000 host driver
 void _cc3000_spiOpen(_cc3000_spiHandleRx rxHandler);

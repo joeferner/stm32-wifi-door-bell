@@ -4,12 +4,11 @@
 #include <misc.h>
 #include <stm32f10x_rcc.h>
 
-#define MDNS_DEVICE_NAME "doorbell01"
-
 #define SPI1_ENABLE
 #define SPI2_ENABLE
 #define SDCARD_ENABLE
 #define CC3000_ENABLE
+#define BUTTON_ENABLE
 
 #define DEBUG_RCC1              0
 #define DEBUG_RCC2              RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO | RCC_APB2Periph_USART1
@@ -51,5 +50,24 @@
 #define CC3000_EN_PIN           GPIO_Pin_2
 #define CC3000_SPI              SPI1
 #endif // SDCARD_ENABLE
+
+#ifdef BUTTON_ENABLE
+#define BUTTON_RCC1             0
+#define BUTTON_RCC2             RCC_APB2Periph_GPIOA
+
+#define BUTTON0_PORT            GPIOA
+#define BUTTON0_PIN             GPIO_Pin_0
+#define BUTTON0_EXTI_LINE       EXTI_Line0
+#define BUTTON0_EXTI_PORT       GPIO_PortSourceGPIOA
+#define BUTTON0_EXTI_PIN        GPIO_PinSource0
+#define BUTTON0_EXTI_CH         EXTI0_IRQn
+
+#define BUTTON1_PORT            GPIOA
+#define BUTTON1_PIN             GPIO_Pin_2
+#define BUTTON1_EXTI_LINE       EXTI_Line2
+#define BUTTON1_EXTI_PORT       GPIO_PortSourceGPIOA
+#define BUTTON1_EXTI_PIN        GPIO_PinSource2
+#define BUTTON1_EXTI_CH         EXTI2_IRQn
+#endif
 
 #endif // PLATFORM_CONFIG_H_INCLUDED

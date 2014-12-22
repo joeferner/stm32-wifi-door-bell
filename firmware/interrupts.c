@@ -5,6 +5,7 @@
 #include "stm32lib/debug.h"
 #include "stm32lib/time.h"
 #include "stm32lib/cc3000.h"
+#include "button.h"
 
 static void HardFault_Handler(void) __attribute__((naked));
 void prvGetRegistersFromStack(uint32_t* pulFaultStackAddress);
@@ -86,13 +87,35 @@ void WWDG_IRQHandler() {
   printf("WWDG_IRQHandler\n");
 }
 
+void EXTI0_IRQHandler() {
+  if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
+#ifdef BUTTON_ENABLE
+    if (GPIO_ReadInputDataBit(BUTTON0_PORT, BUTTON0_PIN) == Bit_RESET) {
+      _button_irq(BUTTON0);
+    }
+#endif
+    EXTI_ClearITPendingBit(EXTI_Line0);
+  }
+}
+
 void EXTI1_IRQHandler() {
+  if (EXTI_GetITStatus(EXTI_Line1) != RESET) {
 #ifdef CC3000_ENABLE
-  if (EXTI_GetITStatus(CC3000_IRQ_EXTI_LINE) != RESET) {
     if (GPIO_ReadInputDataBit(CC3000_IRQ, CC3000_IRQ_PIN) == Bit_RESET) {
       _cc3000_irq();
     }
-    EXTI_ClearITPendingBit(CC3000_IRQ_EXTI_LINE);
-  }
 #endif
+    EXTI_ClearITPendingBit(EXTI_Line1);
+  }
+}
+
+void EXTI2_IRQHandler() {
+  if (EXTI_GetITStatus(EXTI_Line2) != RESET) {
+#ifdef BUTTON_ENABLE
+    if (GPIO_ReadInputDataBit(BUTTON1_PORT, BUTTON1_PIN) == Bit_RESET) {
+      _button_irq(BUTTON1);
+    }
+#endif
+    EXTI_ClearITPendingBit(EXTI_Line2);
+  }
 }

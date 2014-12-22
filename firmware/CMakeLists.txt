@@ -58,6 +58,7 @@ SET(PROJECT_SOURCES
   rtc.c
   config.c
   network.c
+  button.c
   stm32lib/spi.c
   stm32lib/delay.c
   stm32lib/time.c

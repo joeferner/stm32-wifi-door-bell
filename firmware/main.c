@@ -11,6 +11,7 @@
 #include "rtc.h"
 #include "config.h"
 #include "network.h"
+#include "button.h"
 #include "stm32lib/debug.h"
 #include "stm32lib/delay.h"
 #include "stm32lib/time.h"
@@ -45,6 +46,7 @@ void setup() {
   spi_setup();
   sdcard_setupGpio();
   cc3000_setupGpio();
+  button_setup();
 
   if (!sdcard_setup()) {
     printf("Failed to setup SDCard\n");
@@ -71,8 +73,7 @@ void setup() {
 }
 
 void loop() {
-  printf("loop %lu\n", rtc_getSeconds());
-  delay_ms(5000);
+  button_loop();
 }
 
 void sdcard_fat_getTime(SdcardFatFile* f, uint16_t* creationDate, uint16_t* creationTime) {
