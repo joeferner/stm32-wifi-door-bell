@@ -1,6 +1,8 @@
 libs/+3.3V.lib
 libs/+5V.lib
+libs/Vcc.lib
 libs/~GNDPWR.lib
+libs/BATTERY.lib
 libs/R.lib
 libs/C.lib
 libs/CP.lib
@@ -13,6 +15,14 @@ libs/SWD.lib
 libs/FTDI-PLUG.lib
 libs/STM32-48PIN.lib
 libs/PWR_FLAG.lib
+libs/DIODE.lib
+libs/DIODESCH.lib
 libs/DIODEZENER.lib
 libs/USB.lib
+libs/P02.lib
 libs/P03.lib
+libs/ANT.lib
+libs/MC34063A.lib
+libs/MICROSD-AMPHENOL-114-00841-68.lib
+libs/OPAMP-DUAL.lib
+libs/TICC3000.lib
