@@ -91,7 +91,7 @@ void button_loop() {
   }
 
   printf("button pressed '%s' (%d)\n", configButton->name, _button_eventButtonNumber);
-  network_sendButtonEvent(_button_eventButtonNumber);
+  network_sendButtonEvent(_button_eventButtonNumber, configButton);
   _button_eventButtonNumber = BUTTON_NONE;
 }
 

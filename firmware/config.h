@@ -20,6 +20,8 @@ typedef struct {
 
 typedef struct {
   char baseUrl[40];
+  char deviceId[40];
+  char secret[40];
 } ConfigCloud;
 
 typedef struct {

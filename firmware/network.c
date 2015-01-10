@@ -18,7 +18,7 @@ BOOL _network_displayConnectionInfo();
 BOOL _network_displayMAC();
 BOOL _network_hasConfigChanged();
 void _network_writeConfigChangeFile();
-BOOL _network_sendUdpBroadcast(int buttonNumber);
+BOOL _network_sendUdpBroadcast(const char* json);
 
 BOOL network_setup() {
   if (!cc3000_setup(FALSE, CC3000_CONNECT_POLICY_OPEN_AP | CC3000_CONNECT_POLICY_FAST | CC3000_CONNECT_POLICY_PROFILES, config.general.name)) {
@@ -136,12 +136,21 @@ void _network_writeConfigChangeFile() {
   printf("network config wrote %lx\n", crc);
 }
 
-BOOL network_sendButtonEvent(int buttonNumber) {
-  return _network_sendUdpBroadcast(buttonNumber);
+BOOL network_sendButtonEvent(int buttonNumber, ConfigButton* configButton) {
+  char json[100];
+  sprintf(
+    json,
+    "{source:\"%s\",buttonNumber:%d,buttonName:\"%s\",deviceId:\"%s\"}",
+    config.general.name,
+    buttonNumber,
+    configButton->name,
+    config.cloud.deviceId
+  );
+  return _network_sendUdpBroadcast(json);
 }
 
-BOOL _network_sendUdpBroadcast(int buttonNumber) {
-  char buffer[100];
+BOOL _network_sendUdpBroadcast(const char* json) {
+  char buffer[20];
   SOCKET sock;
   sockaddr_in broadcastAddr, bindAddr;
   uint32_t broadcastIp = _network_ipAddress | 0x000000ff;
@@ -160,14 +169,12 @@ BOOL _network_sendUdpBroadcast(int buttonNumber) {
   bindAddr.sin_port = htons(broadcastPort);
   bind(sock, (const sockaddr*)&bindAddr, sizeof(bindAddr));
 
-  sprintf(buffer, "{source: \"%s\", buttonNumber: %d}", config.general.name, buttonNumber);
-  uint16_t bufferLen = strlen(buffer);
-
+  uint16_t jsonLen = strlen(json);
   memset(&broadcastAddr, 0, sizeof(broadcastAddr));
   broadcastAddr.sin_family = AF_INET;
   broadcastAddr.sin_addr.s_addr = htonl(broadcastIp);
   broadcastAddr.sin_port = htons(broadcastPort);
-  if (sendto(sock, buffer, bufferLen, 0, (const sockaddr*)&broadcastAddr, sizeof(broadcastAddr)) != bufferLen) {
+  if (sendto(sock, json, jsonLen, 0, (const sockaddr*)&broadcastAddr, sizeof(broadcastAddr)) != jsonLen) {
     printf("send udp broadcast, failed write\n");
     closesocket(sock);
     return FALSE;
