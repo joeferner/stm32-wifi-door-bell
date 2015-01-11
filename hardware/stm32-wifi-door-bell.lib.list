@@ -26,3 +26,5 @@ libs/MC34063A.lib
 libs/MICROSD-AMPHENOL-114-00841-68.lib
 libs/OPAMP-DUAL.lib
 libs/TICC3000.lib
+libs/LM1875.lib
+libs/POT.lib
