@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by Cvpcb (2014-jul-16 BZR unknown)-product   date = Thu 15 Jan 2015 04:48:21 PM EST
+Cmp-Mod V01 Created by Cvpcb (2014-jul-16 BZR unknown)-product   date = Sun 18 Jan 2015 10:53:46 AM EST
 
 BeginCmp
 TimeStamp = /54B165FC;
@@ -87,8 +87,8 @@ EndCmp
 BeginCmp
 TimeStamp = /54B1B30C/54B1DA59;
 Reference = C301;
-ValeurCmp = 2200uF;
-IdModule  = ;
+ValeurCmp = 2200uF >16V;
+IdModule  = kicadlib:CAPPRD750W80D1600H2500P;
 EndCmp
 
 BeginCmp
@@ -102,7 +102,7 @@ BeginCmp
 TimeStamp = /54B1B30C/54B1D9E6;
 Reference = C303;
 ValeurCmp = 100uF;
-IdModule  = ;
+IdModule  = kicadlib:CAPAE660X790N;
 EndCmp
 
 BeginCmp
@@ -165,7 +165,7 @@ BeginCmp
 TimeStamp = /54B31B7F/54B33763;
 Reference = C604;
 ValeurCmp = 100uF;
-IdModule  = ;
+IdModule  = kicadlib:CAPAE660X790N;
 EndCmp
 
 BeginCmp
@@ -185,8 +185,8 @@ EndCmp
 BeginCmp
 TimeStamp = /54B31B7F/54B33CDC;
 Reference = C607;
-ValeurCmp = 2200uF;
-IdModule  = ;
+ValeurCmp = 2200uF >16V;
+IdModule  = kicadlib:CAPPRD750W80D1600H2500P;
 EndCmp
 
 BeginCmp
@@ -249,28 +249,21 @@ BeginCmp
 TimeStamp = /54B1B30C/54B1D958;
 Reference = L301;
 ValeurCmp = >70uH;
-IdModule  = ;
-EndCmp
-
-BeginCmp
-TimeStamp = /54B1B30C/54B1D9F1;
-Reference = L302;
-ValeurCmp = >70uH;
-IdModule  = ;
+IdModule  = kicadlib:IND_ASPI-8040S-680M-T;
 EndCmp
 
 BeginCmp
 TimeStamp = /54B2B02C/54B2BA09;
 Reference = L401;
 ValeurCmp = 2.2nH;
-IdModule  = ;
+IdModule  = kicadlib:INDC1005X60N;
 EndCmp
 
 BeginCmp
 TimeStamp = /54B2B02C/54B2BA10;
 Reference = L402;
 ValeurCmp = DNP;
-IdModule  = ;
+IdModule  = kicadlib:INDC1005X60N;
 EndCmp
 
 BeginCmp
@@ -627,21 +620,21 @@ BeginCmp
 TimeStamp = /54B2B02C/54B2B952;
 Reference = U401;
 ValeurCmp = TICC3000;
-IdModule  = ;
+IdModule  = kicadlib:TI-CC3000;
 EndCmp
 
 BeginCmp
 TimeStamp = /54B2F245/54B2F45D;
 Reference = U501;
 ValeurCmp = MICROSD-AMPHENOL-114-00841-68;
-IdModule  = ;
+IdModule  = kicadlib:AMPHENOL-114-00841-68;
 EndCmp
 
 BeginCmp
 TimeStamp = /54B31B7F/54B33194;
 Reference = U601;
 ValeurCmp = LM1875;
-IdModule  = ;
+IdModule  = kicadlib:TO170P470X1028X2117-5P;
 EndCmp
 
 BeginCmp
@@ -661,8 +654,8 @@ EndCmp
 BeginCmp
 TimeStamp = /54B2B02C/54B2BA17;
 Reference = X401;
-ValeurCmp = ANT;
-IdModule  = ;
+ValeurCmp = 2500AT44M0400E;
+IdModule  = kicadlib:JT-2500AT44M0400E;
 EndCmp
 
 EndListe
