@@ -28,3 +28,5 @@ libs/OPAMP-DUAL.lib
 libs/TICC3000.lib
 libs/LM1875.lib
 libs/POT.lib
+libs/P01.lib
+libs/SPST-4PIN.lib
