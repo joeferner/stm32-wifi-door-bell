@@ -1,0 +1,75 @@
+(export (version D)
+  (design
+    (source /home/jferner/dev/stm32-wifi-door-bell/hardware/stm32-wifi-door-bell-button.sch)
+    (date "Sat 31 Jan 2015 01:41:57 PM EST")
+    (tool "Eeschema (2014-jul-16 BZR unknown)-product"))
+  (components
+    (comp (ref P101)
+      (value TRANSFORMER)
+      (footprint kicadlib:OST-OSTTA024163)
+      (fields
+        (field (name inventoryId) 603))
+      (libsource (lib stm32-wifi-door-bell) (part P02))
+      (sheetpath (names /) (tstamps /))
+      (tstamp 54CD1DDD))
+    (comp (ref P102)
+      (value BUTTON)
+      (footprint kicadlib:OST-OSTTA024163)
+      (fields
+        (field (name inventoryId) 603))
+      (libsource (lib stm32-wifi-door-bell) (part P02))
+      (sheetpath (names /) (tstamps /))
+      (tstamp 54CD1E1C))
+    (comp (ref D101)
+      (value DIODESCH)
+      (footprint kicadlib:DIOM5226X220N)
+      (fields
+        (field (name inventoryId) 273))
+      (libsource (lib stm32-wifi-door-bell) (part DIODESCH))
+      (sheetpath (names /) (tstamps /))
+      (tstamp 54CD1E5D))
+    (comp (ref D102)
+      (value DIODESCH)
+      (footprint kicadlib:DIOM5226X220N)
+      (fields
+        (field (name inventoryId) 273))
+      (libsource (lib stm32-wifi-door-bell) (part DIODESCH))
+      (sheetpath (names /) (tstamps /))
+      (tstamp 54CD2040)))
+  (libparts
+    (libpart (lib stm32-wifi-door-bell) (part DIODESCH)
+      (footprints
+        (fp DIOM5226X220N))
+      (fields
+        (field (name Reference) D)
+        (field (name Value) DIODESCH))
+      (pins
+        (pin (num 1) (name A) (type passive))
+        (pin (num 2) (name K) (type passive))))
+    (libpart (lib stm32-wifi-door-bell) (part P02)
+      (footprints
+        (fp HDRV2W66P254_1X2_508X249X838P)
+        (fp JST-B2B-XH-A)
+        (fp OST-OSTTC022162)
+        (fp OST-OSTTA024163))
+      (fields
+        (field (name Reference) P)
+        (field (name Value) P02))
+      (pins
+        (pin (num 1) (name ~) (type passive))
+        (pin (num 2) (name ~) (type passive)))))
+  (libraries
+    (library (logical stm32-wifi-door-bell)
+      (uri /home/jferner/dev/stm32-wifi-door-bell/hardware/stm32-wifi-door-bell.lib)))
+  (nets
+    (net (code 1) (name "Net-(D102-Pad2)")
+      (node (ref P102) (pin 1))
+      (node (ref D102) (pin 2)))
+    (net (code 2) (name "Net-(D101-Pad1)")
+      (node (ref P102) (pin 2))
+      (node (ref D101) (pin 1))
+      (node (ref P101) (pin 1)))
+    (net (code 3) (name "Net-(D101-Pad2)")
+      (node (ref D102) (pin 1))
+      (node (ref D101) (pin 2))
+      (node (ref P101) (pin 2)))))

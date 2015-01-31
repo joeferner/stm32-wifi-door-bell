@@ -1,0 +1,31 @@
+Cmp-Mod V01 Created by Cvpcb (2014-jul-16 BZR unknown)-product   date = Sat 31 Jan 2015 01:31:23 PM EST
+
+BeginCmp
+TimeStamp = /54CD1E5D;
+Reference = D101;
+ValeurCmp = DIODESCH;
+IdModule  = kicadlib:DIOM5226X220N;
+EndCmp
+
+BeginCmp
+TimeStamp = /54CD2040;
+Reference = D102;
+ValeurCmp = DIODESCH;
+IdModule  = kicadlib:DIOM5226X220N;
+EndCmp
+
+BeginCmp
+TimeStamp = /54CD1DDD;
+Reference = P101;
+ValeurCmp = TRANSFORMER;
+IdModule  = kicadlib:OST-OSTTA024163;
+EndCmp
+
+BeginCmp
+TimeStamp = /54CD1E1C;
+Reference = P102;
+ValeurCmp = BUTTON;
+IdModule  = kicadlib:OST-OSTTA024163;
+EndCmp
+
+EndListe
