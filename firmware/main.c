@@ -1,9 +1,3 @@
-#include <stm32f10x_gpio.h>
-#include <stm32f10x_rcc.h>
-#include <stm32f10x_spi.h>
-#include <stm32f10x_rtc.h>
-#include <stm32f10x_wwdg.h>
-#include <misc.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,10 +29,8 @@ int main(void) {
 }
 
 void setup() {
-  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-  GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
-  WWDG_DeInit();
+  HAL_Init();
+  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
   time_setup();
 
   debug_setup();

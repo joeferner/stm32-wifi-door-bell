@@ -1,5 +1,3 @@
-#include <stm32f10x_exti.h>
-#include <stm32f10x_gpio.h>
 #include <stdio.h>
 #include "platform_config.h"
 #include "stm32lib/debug.h"
@@ -52,6 +50,8 @@ void PendSV_Handler() {
 
 void SysTick_Handler() {
   time_SysTick_Handler();
+  HAL_IncTick();
+  HAL_SYSTICK_IRQHandler();
 }
 
 void prvGetRegistersFromStack(uint32_t* pulFaultStackAddress) {
@@ -88,34 +88,35 @@ void WWDG_IRQHandler() {
 }
 
 void EXTI0_IRQHandler() {
-  if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
+  if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_0) != RESET) {
 #ifdef BUTTON_ENABLE
-    if (GPIO_ReadInputDataBit(BUTTON0_PORT, BUTTON0_PIN) == Bit_RESET) {
+    if (HAL_GPIO_ReadPin(BUTTON0_PORT, BUTTON0_PIN) == GPIO_PIN_RESET) {
       _button_irq(BUTTON0);
     }
 #endif
-    EXTI_ClearITPendingBit(EXTI_Line0);
+    __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
   }
 }
 
 void EXTI1_IRQHandler() {
-  if (EXTI_GetITStatus(EXTI_Line1) != RESET) {
+  if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_1) != RESET) {
 #ifdef CC3000_ENABLE
-    if (GPIO_ReadInputDataBit(CC3000_IRQ, CC3000_IRQ_PIN) == Bit_RESET) {
+    if (HAL_GPIO_ReadPin(CC3000_IRQ, CC3000_IRQ_PIN) == GPIO_PIN_RESET) {
       _cc3000_irq();
     }
 #endif
-    EXTI_ClearITPendingBit(EXTI_Line1);
+    __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_1);
   }
 }
 
 void EXTI2_IRQHandler() {
-  if (EXTI_GetITStatus(EXTI_Line2) != RESET) {
+  if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_2) != RESET) {
 #ifdef BUTTON_ENABLE
-    if (GPIO_ReadInputDataBit(BUTTON1_PORT, BUTTON1_PIN) == Bit_RESET) {
+    if (HAL_GPIO_ReadPin(BUTTON1_PORT, BUTTON1_PIN) == GPIO_PIN_RESET) {
       _button_irq(BUTTON1);
     }
 #endif
-    EXTI_ClearITPendingBit(EXTI_Line2);
+    __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_2);
   }
 }
+

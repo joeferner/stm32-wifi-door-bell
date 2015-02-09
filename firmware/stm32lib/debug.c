@@ -3,10 +3,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <stm32f10x_gpio.h>
-#include <stm32f10x_usart.h>
 #ifdef DEBUG_USART_DMA_ENABLE
-#include <stm32f10x_dma.h>
 #include "ring_buffer.h"
 #endif
 
@@ -20,13 +17,13 @@ dma_ring_buffer g_debugUsartDmaRxBufferRingBuffer;
 #endif
 
 void debug_setup() {
-  USART_InitTypeDef usartInitStructure;
+  UART_HandleTypeDef uartInitStructure;
   GPIO_InitTypeDef gpioInitStructure;
 #ifdef DEBUG_USART_DMA_ENABLE
   DMA_InitTypeDef dmaInitStructure;
 #endif
 
-  GPIO_StructInit(&gpioInitStructure);
+  memset(&gpioInitStructure, 0, sizeof(gpioInitStructure));
 
 #ifdef DEBUG_USART_DMA_ENABLE
   dma_ring_buffer_init(&g_debugUsartDmaRxBufferRingBuffer, DEBUG_USART_DMA_RX_CH, g_debugUsartDmaRxBuffer, DEBUG_USART_DMA_RX_BUFFER_SIZE);
@@ -50,15 +47,15 @@ void debug_setup() {
   }
 
   // Configure USART Tx as alternate function push-pull
-  gpioInitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-  gpioInitStructure.GPIO_Pin = DEBUG_USART_TX_PIN;
-  gpioInitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(DEBUG_USART_TX, &gpioInitStructure);
+  gpioInitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+  gpioInitStructure.Pin = DEBUG_USART_TX_PIN;
+  gpioInitStructure.Speed = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init(DEBUG_USART_TX, &gpioInitStructure);
 
   // Configure USART Rx as input floating
-  gpioInitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-  gpioInitStructure.GPIO_Pin = DEBUG_USART_RX_PIN;
-  GPIO_Init(DEBUG_USART_RX, &gpioInitStructure);
+  gpioInitStructure.Mode = GPIO_MODE_INPUT;
+  gpioInitStructure.Pin = DEBUG_USART_RX_PIN;
+  HAL_GPIO_Init(DEBUG_USART_RX, &gpioInitStructure);
 
 #ifdef DEBUG_USART_DMA_ENABLE
   // Configure DMA - RX
@@ -79,14 +76,18 @@ void debug_setup() {
 #endif
 
   // USART configuration
-  USART_StructInit(&usartInitStructure);
-  usartInitStructure.USART_BaudRate = DEBUG_USART_BAUD;
-  usartInitStructure.USART_WordLength = USART_WordLength_8b;
-  usartInitStructure.USART_Parity = USART_Parity_No;
-  usartInitStructure.USART_StopBits = USART_StopBits_1;
-  usartInitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-  usartInitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-  USART_Init(DEBUG_USART, &usartInitStructure);
+  memset(&uartInitStructure, 0, sizeof(uartInitStructure));
+  uartInitStructure.Instance = DEBUG_USART;
+  uartInitStructure.Init.BaudRate = DEBUG_USART_BAUD;
+  uartInitStructure.Init.WordLength = UART_WORDLENGTH_8B;
+  uartInitStructure.Init.StopBits = UART_STOPBITS_1;
+  uartInitStructure.Init.Parity = UART_PARITY_NONE;
+  uartInitStructure.Init.Mode = UART_MODE_TX_RX;
+  uartInitStructure.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  uartInitStructure.Init.OverSampling = UART_OVERSAMPLING_16;
+  uartInitStructure.Init.OneBitSampling = UART_ONEBIT_SAMPLING_DISABLED;
+  uartInitStructure.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  HAL_UART_Init(&uartInitStructure);
 
 #ifdef DEBUG_USART_DMA_ENABLE
   // Enable DMA
@@ -95,7 +96,7 @@ void debug_setup() {
 #endif
 
   // Enable USART
-  USART_Cmd(DEBUG_USART, ENABLE);
+  __HAL_UART_ENABLE(&uartInitStructure);
 
   printf("END Debug\n");
 }

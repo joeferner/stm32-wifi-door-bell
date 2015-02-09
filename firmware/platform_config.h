@@ -1,8 +1,7 @@
 #ifndef PLATFORM_CONFIG_H_INCLUDED
 #define PLATFORM_CONFIG_H_INCLUDED
 
-#include <misc.h>
-#include <stm32f10x_rcc.h>
+#include "stm32f0xx_hal.h"
 
 #define SPI1_ENABLE
 #define SPI2_ENABLE
@@ -15,9 +14,9 @@
 #define DEBUG_USART             USART1
 #define DEBUG_USART_BAUD        19200
 #define DEBUG_USART_TX          GPIOA
-#define DEBUG_USART_TX_PIN      GPIO_Pin_9
+#define DEBUG_USART_TX_PIN      GPIO_PIN_9
 #define DEBUG_USART_RX          GPIOA
-#define DEBUG_USART_RX_PIN      GPIO_Pin_10
+#define DEBUG_USART_RX_PIN      GPIO_PIN_10
 #define DEBUG_USART_RX_DMA_CH   DMA1_Channel5
 #define DEBUG_USART_DR_BASE     ((uint32_t)&USART1->DR)
 
@@ -28,7 +27,7 @@
 #define SDCARD_RCC1             RCC_APB1Periph_SPI2
 #define SDCARD_RCC2             RCC_APB2Periph_GPIOA
 #define SDCARD_CS               GPIOA
-#define SDCARD_CS_PIN           GPIO_Pin_8
+#define SDCARD_CS_PIN           GPIO_PIN_8
 #define SDCARD_SPI              SPI2
 #endif // SDCARD_ENABLE
 
@@ -39,15 +38,15 @@
 #define CC3000_RCC1             0
 #define CC3000_RCC2             RCC_APB2Periph_SPI1 | RCC_APB2Periph_GPIOB
 #define CC3000_CS               GPIOB
-#define CC3000_CS_PIN           GPIO_Pin_0
+#define CC3000_CS_PIN           GPIO_PIN_0
 #define CC3000_IRQ              GPIOB
-#define CC3000_IRQ_PIN          GPIO_Pin_1
+#define CC3000_IRQ_PIN          GPIO_PIN_1
 #define CC3000_IRQ_EXTI_LINE    EXTI_Line1
 #define CC3000_IRQ_EXTI_PORT    GPIO_PortSourceGPIOB
-#define CC3000_IRQ_EXTI_PIN     GPIO_PinSource1
+#define CC3000_IRQ_EXTI_PIN     GPIO_PINSource1
 #define CC3000_IRQ_EXTI_CH      EXTI1_IRQn
 #define CC3000_EN               GPIOB
-#define CC3000_EN_PIN           GPIO_Pin_2
+#define CC3000_EN_PIN           GPIO_PIN_2
 #define CC3000_SPI              SPI1
 #endif // SDCARD_ENABLE
 
@@ -56,17 +55,17 @@
 #define BUTTON_RCC2             RCC_APB2Periph_GPIOA
 
 #define BUTTON0_PORT            GPIOA
-#define BUTTON0_PIN             GPIO_Pin_0
+#define BUTTON0_PIN             GPIO_PIN_0
 #define BUTTON0_EXTI_LINE       EXTI_Line0
 #define BUTTON0_EXTI_PORT       GPIO_PortSourceGPIOA
-#define BUTTON0_EXTI_PIN        GPIO_PinSource0
+#define BUTTON0_EXTI_PIN        GPIO_PINSource0
 #define BUTTON0_EXTI_CH         EXTI0_IRQn
 
 #define BUTTON1_PORT            GPIOA
-#define BUTTON1_PIN             GPIO_Pin_2
+#define BUTTON1_PIN             GPIO_PIN_2
 #define BUTTON1_EXTI_LINE       EXTI_Line2
 #define BUTTON1_EXTI_PORT       GPIO_PortSourceGPIOA
-#define BUTTON1_EXTI_PIN        GPIO_PinSource2
+#define BUTTON1_EXTI_PIN        GPIO_PINSource2
 #define BUTTON1_EXTI_CH         EXTI2_IRQn
 #endif
 
