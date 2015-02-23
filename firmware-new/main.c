@@ -1,8 +1,10 @@
 
 #include "platform_config.h"
 #include <stdio.h>
+#include "config.h"
 
 SDCardFAT fat;
+Config config;
 
 static void setup();
 static void spi_setup();
@@ -22,6 +24,14 @@ static void setup() {
   debug_setup();
   spi_setup();
   sdcard_setup();
+
+  if (config_read(&config)) {
+    printf("read config success\n");
+  } else {
+    assert_fail("read config FAILED");
+    while (1);
+  }
+
   printf("setup complete!\n");
 }
 
@@ -39,12 +49,12 @@ static void spi_setup() {
 }
 
 static void sdcard_setup() {
-  SDCard_initParamsInit(&fat.sdcard);
+  SDCardFAT_initParamsInit(&fat);
   fat.sdcard.initializeSpi = true;
   fat.sdcard.spiInstance = SDCARD_SPI;
   fat.sdcard.csPort = SDCARD_CS_PORT;
   fat.sdcard.csPin = SDCARD_CS_PIN;
-  SDCard_init(&fat.sdcard);
+  SDCardFAT_init(&fat);
   printf("setup sdcard complete\n");
 }
 
